@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="request-styles.css">
+    <title>Substitute Update Form</title>
+</head>
+
+<body>
+    <div class="form-container">
+        <nav class="tab-nav">
+            <a href="sub-request.html" class="tab-link">Substitute Request</a>
+            <a href="sub-addition.html" class="tab-link">Substitute Update</a>
+        </nav>
+
+        <form id="subAdditionForm" method="POST"
+            action="https://script.google.com/macros/s/AKfycbwYgrLG1bqJCMxTJfKh2w-jjS3zGja00WQqC83Q4BfOd3t_S6pLxV9xJYnSqoY7Bsse/exec">
+            <h1>Substitute Update Form</h1>
+
+            <label for="accEmail">ACC Email:</label>
+            <input type="email" id="accEmail" name="accEmail" required placeholder="yourname@austincc.edu">
+            <span id="accEmailError" style="color: red; display: none;">ACC email must end in @austincc.edu</span>
+
+            <label for="name">Substitute Name:</label><br>
+            <input type="text" id="name" name="name" required><br><br>
+
+            <label for="email">Personal Email:</label><br>
+            <input type="email" id="email" name="email" required><br><br>
+
+            <label for="phone">Phone Number:</label><br>
+            <input type="tel" id="phone" name="phone" required maxlength="14" placeholder="(XXX) XXX-XXXX"><br><br>
+
+            <label>Preferred Method of Contact:</label>
+            <div class="radio-group">
+                <label>
+                    <input type="radio" name="contactMethod" value="Email" required>
+                    Email
+                </label>
+                <label>
+                    <input type="radio" name="contactMethod" value="Text">
+                    Text
+                </label>
+            </div>
+
+            <label>Days Available to Sub:</label>
+            <div class="checkbox-group">
+                <label><input type="checkbox" name="daysAvailable" value="Mon"> Mon</label>
+                <label><input type="checkbox" name="daysAvailable" value="Tues"> Tues</label>
+                <label><input type="checkbox" name="daysAvailable" value="Wed"> Wed</label>
+                <label><input type="checkbox" name="daysAvailable" value="Thurs"> Thurs</label>
+                <label><input type="checkbox" name="daysAvailable" value="Fri"> Fri</label>
+                <label><input type="checkbox" name="daysAvailable" value="Sat"> Sat</label>
+            </div>
+
+            <!-- Placeholder Time input container -->
+            <div id="timeInputsContainer"></div>
+
+            <label>In-Person or Online?</label>
+            <div class="radio-group">
+                <label><input type="radio" name="availabilityMode" value="In-Person" required> In-Person</label>
+                <label><input type="radio" name="availabilityMode" value="Online"> Online</label>
+                <label><input type="radio" name="availabilityMode" value="Both"> Both</label>
+            </div>
+
+            <label>Which campuses are you available at?</label>
+            <div class="checkbox-group" id="campusCheckboxGroup">
+                <label><input type="checkbox" name="campuses" value="Online Only"> Online Only</label>
+                <label><input type="checkbox" name="campuses" value="Highland Campus"> Highland Campus</label>
+                <label><input type="checkbox" name="campuses" value="Todos Juntos Learning Center"> Todos Juntos
+                    Learning Center</label>
+                <label><input type="checkbox" name="campuses" value="South Austin Campus"> South Austin Campus</label>
+                <label><input type="checkbox" name="campuses" value="Central Austin Campus"> Central Austin
+                    Campus</label>
+                <label><input type="checkbox" name="campuses" value="North Austin Campus"> North Austin Campus</label>
+                <label><input type="checkbox" name="campuses" value="Riverside Campus"> Riverside Campus</label>
+                <label><input type="checkbox" name="campuses" value="Eastview Campus"> Eastview Campus</label>
+                <label><input type="checkbox" name="campuses" value="Asian American Resource Center"> Asian American
+                    Resource Center</label>
+                <label><input type="checkbox" name="campuses" value="Northridge Campus"> Northridge Campus</label>
+                <label><input type="checkbox" name="campuses" value="Cypress Creek Campus"> Cypress Creek Campus</label>
+                <label><input type="checkbox" name="campuses" value="Round Rock Campus"> Round Rock Campus</label>
+                <label><input type="checkbox" name="campuses" value="Provan Opportunity Center in Pflugerville"> Provan
+                    Opportunity Center in Pflugerville</label>
+            </div>
+
+            <label for="classesCanTeach">Which classes can you teach?</label>
+            <div id="classesCanTeachContainer" class="checkbox-group">
+                <span>Loading classes...</span>
+            </div>
+
+            <div class="form-buttons">
+                <button type="submit">Submit</button>
+                <button type="reset">Reset</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const additionForm = document.getElementById("subAdditionForm");
+
+        const ESL_URL = "https://script.google.com/macros/s/AKfycbz8Z-NG8r0laNZkCz5ztDf2xRqtxh39N18Te7bt7MIUHYDVpp4NWgb8SNlNLy2ms8BLiQ/exec";
+        const HSE_URL = "https://script.google.com/macros/s/AKfycbyM7Wn55Vl4d0jcqDvDpPB53_5IXXzueL2TDZ2JJuLIcAIHZ0tMzSzYK-Atf1ZqcHo/exec";
+
+        const classCheckboxContainer = document.getElementById("classesCanTeachContainer");
+
+        async function fetchClassNames(url) {
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                return Object.keys(data);
+            } catch (err) {
+                console.error("Error fetching class data from:", url, err);
+                return [];
+            }
+        }
+
+        async function populateClassesCanTeach() {
+            const [eslClasses, hseClasses] = await Promise.all([
+                fetchClassNames(ESL_URL),
+                fetchClassNames(HSE_URL)
+            ]);
+
+            const allClasses = [...new Set([...eslClasses, ...hseClasses])].sort();
+
+            classCheckboxContainer.innerHTML = "";
+
+            allClasses.forEach(cls => {
+                const label = document.createElement("label");
+                label.className = "checkbox-item";
+
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.name = "classesCanTeach";
+                checkbox.value = cls;
+
+                label.appendChild(checkbox);
+                label.append(" " + cls);
+
+                classCheckboxContainer.appendChild(label);
+            });
+        }
+
+        populateClassesCanTeach();
+
+        document.getElementById("subAdditionForm").addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const accEmail = document.getElementById("accEmail").value.trim();
+            const name = document.getElementById("name").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const phone = document.getElementById("phone").value.trim();
+            const contactMethod = document.querySelector('input[name="contactMethod"]:checked')?.value || "";
+
+            const daysAvailable = Array.from(document.querySelectorAll('input[name="daysAvailable"]:checked')).map(cb => cb.value);
+            const campuses = Array.from(document.querySelectorAll('input[name="campuses"]:checked')).map(cb => cb.value);
+            const classesCanTeach = Array.from(document.querySelectorAll('input[name="classesCanTeach"]:checked')).map(cb => cb.value);
+
+            const timesAvailable = {};
+            daysAvailable.forEach(day => {
+                const startInput = document.querySelector(`input[name="start_${day}"]`);
+                const endInput = document.querySelector(`input[name="end_${day}"]`);
+                if (startInput?.value && endInput?.value) {
+                    timesAvailable[day] = `${startInput.value} to ${endInput.value}`;
+                }
+            });
+
+            const availabilityMode = document.querySelector('input[name="availabilityMode"]:checked')?.value || "";
+
+            if (!accEmail.toLowerCase().endsWith("@austincc.edu")) {
+                alert("Please enter a valid ACC email ending in @austincc.edu");
+                return;
+            }
+
+            if (!name || !email || !phone || !contactMethod) {
+                alert("Please fill in all required fields.");
+                return;
+            }
+
+            const numericPhone = phone.replace(/\D/g, "");
+            if (numericPhone.length > 10) {
+                alert("Phone number must be 10 digits or fewer.");
+                return;
+            }
+
+            const formData = new URLSearchParams({
+                formType: "addition", // 🔑 important!
+                accEmail: accEmail,
+                name: name,
+                email: email,
+                phone: phone,
+                contactMethod: contactMethod,
+                daysAvailable: daysAvailable.join(", "),
+                timesAvailable: JSON.stringify(timesAvailable),
+                availabilityMode: availabilityMode,
+                campuses: campuses.join(", "),
+                classesCanTeach: classesCanTeach.join(", ")
+            });
+
+            fetch("https://script.google.com/macros/s/AKfycbwYgrLG1bqJCMxTJfKh2w-jjS3zGja00WQqC83Q4BfOd3t_S6pLxV9xJYnSqoY7Bsse/exec", {
+                method: "POST",
+                body: formData
+            })
+                .then(response => response.text())
+                .then(result => {
+                    if (result.includes("Substitute added successfully")) {
+                        alert("Substitute added successfully!");
+                        e.target.reset();
+                    } else if (result.includes("Information updated")) {
+                        alert("Information updated successfully!");
+                        e.target.reset();
+                    } else {
+                        alert("Submission failed. Please try again.");
+                        console.error(result);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error submitting form:", error);
+                    alert("Error submitting form.");
+                });
+        });
+
+        // Format phone input
+        const phoneInput = document.getElementById("phone");
+        phoneInput.addEventListener("input", (e) => {
+            let digits = e.target.value.replace(/\D/g, "");
+            if (digits.length > 10) digits = digits.slice(0, 10);
+
+            let formatted = "";
+            if (digits.length > 0) formatted += "(" + digits.slice(0, 3);
+            if (digits.length >= 4) formatted += ") " + digits.slice(3, 6);
+            if (digits.length >= 7) formatted += "-" + digits.slice(6, 10);
+
+            e.target.value = formatted;
+        });
+
+        // === Time picker rendering ===
+        const dayCheckboxes = document.querySelectorAll('input[name="daysAvailable"]');
+        const timeInputsContainer = document.getElementById("timeInputsContainer");
+
+        function updateTimeInputs() {
+            timeInputsContainer.innerHTML = "";
+
+            dayCheckboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    const day = checkbox.value;
+
+                    const wrapper = document.createElement("div");
+                    wrapper.style.marginBottom = "10px";
+                    wrapper.classList.add("time-range");
+
+                    const label = document.createElement("label");
+                    label.textContent = `${day} Available Time:`;
+                    label.style.display = "block";
+                    label.style.marginTop = "10px";
+
+                    const startInput = document.createElement("input");
+                    startInput.type = "time";
+                    startInput.name = `start_${day}`;
+                    startInput.required = true;
+                    startInput.step = 900;
+
+                    const endInput = document.createElement("input");
+                    endInput.type = "time";
+                    endInput.name = `end_${day}`;
+                    endInput.required = true;
+                    endInput.step = 900;
+                    const toLabel = document.createElement("span");
+                    toLabel.textContent = " to ";
+                    toLabel.style.margin = "0 8px";
+
+                    wrapper.appendChild(label);
+                    wrapper.appendChild(startInput);
+                    wrapper.appendChild(toLabel);
+                    wrapper.appendChild(endInput);
+
+                    timeInputsContainer.appendChild(wrapper);
+                }
+            });
+        }
+
+        dayCheckboxes.forEach(cb => cb.addEventListener("change", updateTimeInputs));
+
+        // Highlight tab if applicable
+        const links = document.querySelectorAll(".tab-link");
+        links.forEach(link => {
+            if (link.href === window.location.href) {
+                link.classList.add("active");
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -25,9 +25,6 @@
             <label for="name">Substitute Name:</label><br>
             <input type="text" id="name" name="name" required><br><br>
 
-            <label for="email">Personal Email:</label><br>
-            <input type="email" id="email" name="email" required><br><br>
-
             <label for="phone">Phone Number:</label><br>
             <input type="tel" id="phone" name="phone" required maxlength="14" placeholder="(XXX) XXX-XXXX"><br><br>
 
@@ -164,7 +161,6 @@
 
             const accEmail = document.getElementById("accEmail").value.trim();
             const name = document.getElementById("name").value.trim();
-            const email = document.getElementById("email").value.trim();
             const phone = document.getElementById("phone").value.trim();
             const contactMethod = document.querySelector('input[name="contactMethod"]:checked')?.value || "";
 
@@ -172,6 +168,20 @@
             const campuses = Array.from(document.querySelectorAll('input[name="campuses"]:checked')).map(cb => cb.value);
             const classesCanTeach = Array.from(document.querySelectorAll('input[name="classesCanTeach"]:checked')).map(cb => cb.value);
 
+            const carrier = "";
+            if (contactMethod.toLowerCase() === "text") {
+                const selectEl = document.getElementById("carrier-select");
+                if (selectEl) {
+                    carrier = selectEl.value.trim();
+                    if (carrier === "Other") {
+                        const other = document.getElementById("other-carrier");
+                        if (other && other.value.trim()) {
+                            carrier = other.value.trim();
+                        }
+                    }
+                }
+            }
+            
             const timesAvailable = {};
             daysAvailable.forEach(day => {
                 const startInput = document.querySelector(`input[name="start_${day}"]`);
@@ -188,7 +198,7 @@
                 return;
             }
 
-            if (!name || !email || !phone || !contactMethod) {
+            if (!name || !accEmail || !phone || !contactMethod) {
                 alert("Please fill in all required fields.");
                 return;
             }
@@ -203,7 +213,7 @@
                 formType: "addition", // 🔑 important!
                 accEmail: accEmail,
                 name: name,
-                email: email,
+                email: accEmail,
                 phone: phone,
                 carrier: carrier,
                 contactMethod: contactMethod,

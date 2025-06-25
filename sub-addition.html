@@ -31,16 +31,32 @@
             <label for="phone">Phone Number:</label><br>
             <input type="tel" id="phone" name="phone" required maxlength="14" placeholder="(XXX) XXX-XXXX"><br><br>
 
-            <label>Preferred Method of Contact:</label>
+            <label>Preferred Method of Contact:</label><br>
             <div class="radio-group">
-                <label>
-                    <input type="radio" name="contactMethod" value="Email" required>
-                    Email
-                </label>
-                <label>
-                    <input type="radio" name="contactMethod" value="Text">
-                    Text
-                </label>
+                <input type="radio" id="contact-email" name="contactMethod" value="email"><label>Email</label>
+                <input type="radio" id="contact-text" name="contactMethod" value="text"><label>Text</label>
+            </div>
+
+            <div id="carrier-container" style="display:none;">
+                <label for="carrier-select">Phone Carrier:</label><br>
+                <select id="carrier-select" name="carrier">
+                    <option value="">-- Select a carrier --</option>
+                    <option value="Verizon">Verizon</option>
+                    <option value="AT&T">AT&T</option>
+                    <option value="T-Mobile">T-Mobile</option>
+                    <option value="Sprint">Sprint</option>
+                    <option value="Boost Mobile">Boost Mobile</option>
+                    <option value="Cricket Wireless">Cricket Wireless</option>
+                    <option value="Metro by T-Mobile">Metro by T-Mobile</option>
+                    <option value="Google Fi">Google Fi</option>
+                    <option value="US Cellular">US Cellular</option>
+                    <option value="Other">Other</option>
+                </select><br><br>
+
+                <div id="other-carrier-container" style="display:none;">
+                    <label for="other-carrier">Please specify:</label><br>
+                    <input type="text" id="other-carrier" name="otherCarrier" placeholder="Enter your carrier"><br><br>
+                </div>
             </div>
 
             <label>Days Available to Sub:</label>
@@ -189,6 +205,7 @@
                 name: name,
                 email: email,
                 phone: phone,
+                carrier: carrier,
                 contactMethod: contactMethod,
                 daysAvailable: daysAvailable.join(", "),
                 timesAvailable: JSON.stringify(timesAvailable),
@@ -287,6 +304,50 @@
             if (link.href === window.location.href) {
                 link.classList.add("active");
             }
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const emailRadio = document.getElementById("contact-email");
+            const textRadio = document.getElementById("contact-text");
+            const carrierContainer = document.getElementById("carrier-container");
+
+            function updateCarrierVisibility() {
+                if (textRadio.checked) {
+                    carrierContainer.style.display = "block";
+                } else {
+                    carrierContainer.style.display = "none";
+                }
+            }
+
+            emailRadio.addEventListener("change", updateCarrierVisibility);
+            textRadio.addEventListener("change", updateCarrierVisibility);
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const textRadio = document.getElementById("contact-text");
+            const emailRadio = document.getElementById("contact-email");
+            const carrierContainer = document.getElementById("carrier-container");
+            const carrierSelect = document.getElementById("carrier-select");
+            const otherCarrierContainer = document.getElementById("other-carrier-container");
+
+            function updateCarrierVisibility() {
+                carrierContainer.style.display = textRadio.checked ? "block" : "none";
+            }
+
+            function updateOtherCarrierVisibility() {
+                otherCarrierContainer.style.display = carrierSelect.value === "Other" ? "block" : "none";
+            }
+
+            textRadio.addEventListener("change", updateCarrierVisibility);
+            emailRadio.addEventListener("change", updateCarrierVisibility);
+            carrierSelect.addEventListener("change", updateOtherCarrierVisibility);
+
+            updateCarrierVisibility();
+            updateOtherCarrierVisibility();
         });
     </script>
 </body>

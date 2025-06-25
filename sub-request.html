@@ -18,6 +18,9 @@
             action="https://script.google.com/macros/s/AKfycbwYgrLG1bqJCMxTJfKh2w-jjS3zGja00WQqC83Q4BfOd3t_S6pLxV9xJYnSqoY7Bsse/exec">
             <h1>Substitute Request Form</h1>
 
+            <label for="teacherEmail">Your ACC Email:</label><br>
+            <input type="email" id="teacherEmail" name="teacherEmail" required><br><br>
+
             <!-- Program Dropdown -->
             <label for="programDropdown">Program Type:</label><br>
             <select id="programDropdown">
@@ -255,8 +258,9 @@
             const classType = document.querySelector('input[name="classType"]:checked')?.value;
             const classLocation = document.querySelector('input[name="classLocation"]:checked')?.value;
             const buildingRoom = document.getElementById("buildingRoom").value;
+            const teacherEmail = document.getElementById("teacherEmail").value;
 
-            if (!program || !selectedClass || !selectedInstructor || !selectedTime || !dateNeeded || !classType) {
+            if (!program || !selectedClass || !selectedInstructor || !selectedTime || !dateNeeded || !classType || !teacherEmail) {
                 alert("Please complete all fields before submitting.");
                 return;
             }
@@ -269,7 +273,8 @@
                 dateNeeded: dateNeeded,
                 classType: classType,
                 classLocation: classType === "In-Person" ? classLocation || "" : "",
-                buildingRoom: classType === "In-Person" ? buildingRoom || "" : ""
+                buildingRoom: classType === "In-Person" ? buildingRoom || "" : "",
+                teacherEmail: teacherEmail
             });
 
             fetch("https://script.google.com/macros/s/AKfycbwYgrLG1bqJCMxTJfKh2w-jjS3zGja00WQqC83Q4BfOd3t_S6pLxV9xJYnSqoY7Bsse/exec", {

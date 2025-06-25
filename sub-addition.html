@@ -275,13 +275,12 @@
                     startInput.type = "time";
                     startInput.name = `start_${day}`;
                     startInput.required = true;
-                    startInput.step = 900;
 
                     const endInput = document.createElement("input");
                     endInput.type = "time";
                     endInput.name = `end_${day}`;
                     endInput.required = true;
-                    endInput.step = 900;
+                    
                     const toLabel = document.createElement("span");
                     toLabel.textContent = " to ";
                     toLabel.style.margin = "0 8px";

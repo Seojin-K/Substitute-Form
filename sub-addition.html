@@ -168,7 +168,7 @@
             const campuses = Array.from(document.querySelectorAll('input[name="campuses"]:checked')).map(cb => cb.value);
             const classesCanTeach = Array.from(document.querySelectorAll('input[name="classesCanTeach"]:checked')).map(cb => cb.value);
 
-            const carrier = "";
+            let carrier = "";
             if (contactMethod.toLowerCase() === "text") {
                 const selectEl = document.getElementById("carrier-select");
                 if (selectEl) {

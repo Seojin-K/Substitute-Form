@@ -89,6 +89,7 @@
                 <button type="submit">Submit</button>
                 <button type="reset">Reset</button>
             </div>
+            <div id="submissionMessage" style="color: green; font-weight: bold; margin-top: 1em;"></div>
         </form>
     </div>
 
@@ -284,7 +285,8 @@
                 .then(res => res.text())
                 .then(response => {
                     if (response.includes("Success")) {
-                        alert("Form submitted successfully!");
+                        const messageBox = document.getElementById("submissionMessage");
+                        messageBox.textContent = "Substitute added successfully!";
                         form.reset();
                         classDropdown.innerHTML = '<option>Loading classes...</option>';
                         instructorDropdown.innerHTML = '<option>Select a class first</option>';
@@ -294,7 +296,9 @@
                         timeDropdown.disabled = true;
                         programDropdown.selectedIndex = 0;
                     } else {
-                        alert("Submission failed. Please try again.");
+                        const messageBox = document.getElementById("submissionMessage");
+                        messageBox.style.color = "red";
+                        messageBox.textContent = "Error submitting form.";
                         console.error(response);
                     }
                 })

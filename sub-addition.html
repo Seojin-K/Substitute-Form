@@ -106,6 +106,7 @@
                 <button type="submit">Submit</button>
                 <button type="reset">Reset</button>
             </div>
+            <div id="submissionMessage" style="color: green; font-weight: bold; margin-top: 1em;"></div>
         </form>
     </div>
 
@@ -230,20 +231,28 @@
             })
                 .then(response => response.text())
                 .then(result => {
+                    const messageBox = document.getElementById("submissionMessage");
                     if (result.includes("Substitute added successfully")) {
-                        alert("Substitute added successfully!");
+                        messageBox.textContent = "Substitute added successfully!";
+                        messageBox.scrollIntoView({ behavior: "smooth" });
                         e.target.reset();
                     } else if (result.includes("Information updated")) {
-                        alert("Information updated successfully!");
+                        messageBox.textContent = "Information updated successfully!";
+                        messageBox.scrollIntoView({ behavior: "smooth" });
                         e.target.reset();
                     } else {
-                        alert("Submission failed. Please try again.");
+                        messageBox.style.color = "red";
+                        messageBox.textContent = "Submission failed. Please try again.";
+                        messageBox.scrollIntoView({ behavior: "smooth" });
                         console.error(result);
                     }
                 })
                 .catch(error => {
+                    const messageBox = document.getElementById("submissionMessage");
+                    messageBox.style.color = "red";
+                    messageBox.textContent = "Error submitting form.";
+                    messageBox.scrollIntoView({ behavior: "smooth" });
                     console.error("Error submitting form:", error);
-                    alert("Error submitting form.");
                 });
         });
             

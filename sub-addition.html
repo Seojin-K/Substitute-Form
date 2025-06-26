@@ -236,10 +236,12 @@
                         messageBox.textContent = "Substitute added successfully!";
                         messageBox.scrollIntoView({ behavior: "smooth" });
                         e.target.reset();
+                        document.getElementById("timeInputsContainer").innerHTML = "";
                     } else if (result.includes("Information updated")) {
                         messageBox.textContent = "Information updated successfully!";
                         messageBox.scrollIntoView({ behavior: "smooth" });
                         e.target.reset();
+                        document.getElementById("timeInputsContainer").innerHTML = "";
                     } else {
                         messageBox.style.color = "red";
                         messageBox.textContent = "Submission failed. Please try again.";

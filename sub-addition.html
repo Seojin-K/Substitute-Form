@@ -210,7 +210,7 @@
             }
 
             const formData = new URLSearchParams({
-                formType: "addition", // 🔑 important!
+                formType: "addition", 
                 accEmail: accEmail,
                 name: name,
                 email: accEmail,
@@ -224,7 +224,7 @@
                 classesCanTeach: classesCanTeach.join(", ")
             });
 
-            fetch("https://script.google.com/macros/s/AKfycbwYgrLG1bqJCMxTJfKh2w-jjS3zGja00WQqC83Q4BfOd3t_S6pLxV9xJYnSqoY7Bsse/exec", {
+            /*fetch("https://script.google.com/macros/s/AKfycbwYgrLG1bqJCMxTJfKh2w-jjS3zGja00WQqC83Q4BfOd3t_S6pLxV9xJYnSqoY7Bsse/exec", {
                 method: "POST",
                 body: formData
             })
@@ -244,7 +244,26 @@
                 .catch(error => {
                     console.error("Error submitting form:", error);
                     alert("Error submitting form.");
-                });
+                });*/
+            fetch("https://script.google.com/macros/s/AKfycbwYgrLG1bqJCMxTJfKh2w-jjS3zGja00WQqC83Q4BfOd3t_S6pLxV9xJYnSqoY7Bsse/exec", {
+  method: "POST",
+  body: new URLSearchParams({
+    formType: "addition",
+    accEmail: "test@austincc.edu",
+    name: "Test User",
+    email: "test@austincc.edu",
+    phone: "1234567890",
+    contactMethod: "email",
+    daysAvailable: "Mon, Wed",
+    timesAvailable: JSON.stringify({ Mon: "8:00 to 10:00", Wed: "10:00 to 12:00" }),
+    availabilityMode: "Online",
+    campuses: "Online Only",
+    classesCanTeach: "ESL"
+  })
+})
+.then(res => res.text())
+.then(console.log)
+.catch(console.error);
         });
 
         // Format phone input

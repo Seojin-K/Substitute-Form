@@ -226,7 +226,9 @@
 
             fetch("https://script.google.com/macros/s/AKfycbwYgrLG1bqJCMxTJfKh2w-jjS3zGja00WQqC83Q4BfOd3t_S6pLxV9xJYnSqoY7Bsse/exec", {
                 method: "POST",
-                body: formData
+                body: formData,
+                redirect: "follow",
+                mode: "no-cors"
             })
                 .then(response => response.text())
                 .then(result => {

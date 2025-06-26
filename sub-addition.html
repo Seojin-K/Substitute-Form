@@ -267,6 +267,20 @@
         const timeInputsContainer = document.getElementById("timeInputsContainer");
 
         function updateTimeInputs() {
+            // Save existing time values
+            const existingTimes = {};
+            dayCheckboxes.forEach(checkbox => {
+                const day = checkbox.value;
+                const startInput = document.querySelector(`input[name="start_${day}"]`);
+                const endInput = document.querySelector(`input[name="end_${day}"]`);
+                if (startInput && endInput) {
+                    existingTimes[day] = {
+                        start: startInput.value,
+                        end: endInput.value
+                    };
+                }
+            });
+            
             timeInputsContainer.innerHTML = "";
 
             dayCheckboxes.forEach(checkbox => {
@@ -286,11 +300,13 @@
                     startInput.type = "time";
                     startInput.name = `start_${day}`;
                     startInput.required = true;
+                    startInput.value = existingTimes[day]?.start || "";
 
                     const endInput = document.createElement("input");
                     endInput.type = "time";
                     endInput.name = `end_${day}`;
                     endInput.required = true;
+                    endInput.value = existingTimes[day]?.end || "";
                     
                     const toLabel = document.createElement("span");
                     toLabel.textContent = " to ";

@@ -213,22 +213,20 @@
                 formType: "addition", // 🔑 important!
                 accEmail: accEmail,
                 name: name,
-                //email: accEmail,
-                //phone: phone,
-                //carrier: carrier,
-                //contactMethod: contactMethod,
-                //daysAvailable: daysAvailable.join(", "),
-                //timesAvailable: JSON.stringify(timesAvailable),
-                //availabilityMode: availabilityMode,
-                //campuses: campuses.join(", "),
-                //classesCanTeach: classesCanTeach.join(", ")
+                email: accEmail,
+                phone: phone,
+                carrier: carrier,
+                contactMethod: contactMethod,
+                daysAvailable: daysAvailable.join(", "),
+                timesAvailable: JSON.stringify(timesAvailable),
+                availabilityMode: availabilityMode,
+                campuses: campuses.join(", "),
+                classesCanTeach: classesCanTeach.join(", ")
             });
 
             fetch("https://script.google.com/macros/s/AKfycbwYgrLG1bqJCMxTJfKh2w-jjS3zGja00WQqC83Q4BfOd3t_S6pLxV9xJYnSqoY7Bsse/exec", {
                 method: "POST",
-                body: formData,
-                redirect: "follow",
-                mode: "no-cors"
+                body: formData
             })
                 .then(response => response.text())
                 .then(result => {

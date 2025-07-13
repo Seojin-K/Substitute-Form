@@ -71,6 +71,31 @@ body {
     font-weight: bold;
 }
 
+.campus-group .choices {
+    max-width: 400px;
+    width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.campus-group .choices__inner {
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+}
+
+.campus-group .choices__list--dropdown {
+    max-height: 250px;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
 .tab-link.active {
     background-color: #ffffff;
     border-bottom: 2px solid white;

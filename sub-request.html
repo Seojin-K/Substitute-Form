@@ -3,318 +3,150 @@
 
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="request-styles.css">
     <title>Substitute Request Form</title>
+    <link rel="stylesheet" href="request-styles.css">
 </head>
 
 <body>
     <div class="form-container">
-        <!-- <nav class="tab-nav">
-            <a href="sub-request.html" class="tab-link">Substitute Request</a>
-            <a href="sub-addition.html" class="tab-link">Substitute Update</a>
-        </nav> -->
-
-        <form id="subRequest" method="POST"
-            action="https://script.google.com/macros/s/AKfycbwYgrLG1bqJCMxTJfKh2w-jjS3zGja00WQqC83Q4BfOd3t_S6pLxV9xJYnSqoY7Bsse/exec">
-            <!--<h1>Substitute Request Form</h1>-->
-
-            <label for="teacherEmail">Your ACC Email:</label><br>
-            <input type="email" id="teacherEmail" name="teacherEmail" required><br><br>
-
-            <!-- Program Dropdown -->
-            <label for="programDropdown">Program Type:</label><br>
-            <select id="programDropdown">
+        <form id="subRequestForm">
+            <label for="program">Program:</label>
+            <select id="program" name="program" required>
                 <option value="">-- Select Program --</option>
                 <option value="ESL">ESL</option>
                 <option value="HSE">HSE</option>
-            </select><br><br>
+            </select>
 
-            <!-- Class Dropdown -->
-            <label for="classDropdown">Select Class:</label><br>
-            <select id="classDropdown" disabled>
-                <option>Select a program first</option>
-            </select><br><br>
+            <label for="class">Class:</label>
+            <select id="class" name="class" required></select>
 
-            <!-- Instructor Dropdown -->
-            <label for="instructorDropdown">Select Instructor:</label><br>
-            <select id="instructorDropdown" disabled>
-                <option>Select a class first</option>
-            </select><br><br>
+            <label for="instructor">Instructor:</label>
+            <select id="instructor" name="instructor" required></select>
 
-            <!-- Day + Time Dropdown -->
-            <label for="timeDropdown">Meeting Day & Time:</label><br>
-            <select id="timeDropdown" disabled>
-                <option>Select a class and instructor first</option>
-            </select><br><br>
+            <label for="meetingTime">Meeting Day & Time:</label>
+            <select id="meetingTime" name="meetingTime" required></select>
 
-            <label for="dateNeeded">Date sub is needed:</label><br>
-            <input type="date" id="dateNeeded" name="dateNeeded" required><br><br>
+            <label for="dateNeeded">Date sub is needed:</label>
+            <input type="date" id="dateNeeded" name="dateNeeded" required>
 
-            <label>Is Your Class In-Person or Online?</label><br>
-            <div class="radio-group">
-                <label><input type="radio" id="inPerson" name="classType" value="In-Person" required>
-                    In-Person</label>
-                <label><input type="radio" id="online" name="classType" value="Online"> Online</label>
-            </div>
+            <input type="hidden" id="classType" name="classType">
+            <input type="hidden" id="classLocation" name="classLocation">
+            <input type="hidden" id="buildingRoom" name="buildingRoom">
+            <input type="hidden" id="classCode" name="classCode">
 
-            <div id="locationContainer" style="display: none;">
-                <label>In which location is your class in?</label>
-                <div class="radio-group">
-                    <label><input type="radio" name="classLocation" value="Highland Campus"> Highland Campus</label>
-                    <label><input type="radio" name="classLocation" value="Todos Juntos Learning Center"> Todos Juntos
-                        Learning Center</label>
-                    <label><input type="radio" name="classLocation" value="South Austin Campus"> South Austin
-                        Campus</label>
-                    <label><input type="radio" name="classLocation" value="Central Austin Campus"> Central Austin
-                        Campus</label>
-                    <label><input type="radio" name="classLocation" value="North Austin Campus"> North Austin
-                        Campus</label>
-                    <label><input type="radio" name="classLocation" value="Riverside Campus"> Riverside Campus</label>
-                    <label><input type="radio" name="classLocation" value="Eastview Campus"> Eastview Campus</label>
-                    <label><input type="radio" name="classLocation" value="Asian American Resource Center"> Asian
-                        American Resource Center</label>
-                    <label><input type="radio" name="classLocation" value="Northridge Campus"> Northridge Campus</label>
-                    <label><input type="radio" name="classLocation" value="Cypress Creek Campus"> Cypress Creek
-                        Campus</label>
-                    <label><input type="radio" name="classLocation" value="Round Rock Campus"> Round Rock Campus</label>
-                    <label><input type="radio" name="classLocation" value="Provan Opportunity Center in Pflugerville">
-                        Provan Opportunity Center in Pflugerville</label>
-                </div>
-
-                <label for="buildingRoom">Which building and room number is your class?</label><br>
-                <input type="text" id="buildingRoom" name="buildingRoom"><br><br>
-            </div>
+            <label for="teacherEmail">Your ACC Email:</label>
+            <input type="email" id="teacherEmail" name="teacherEmail" required placeholder="yourname@austincc.edu">
 
             <div class="form-buttons">
                 <button type="submit">Submit</button>
                 <button type="reset">Reset</button>
             </div>
-            <div id="submissionMessage" style="color: green; font-weight: bold; margin-top: 1em;"></div>
         </form>
     </div>
 
-    <!-- Dropdown Script -->
     <script>
-        const programDropdown = document.getElementById("programDropdown");
-        const classDropdown = document.getElementById("classDropdown");
-        const instructorDropdown = document.getElementById("instructorDropdown");
-        const timeDropdown = document.getElementById("timeDropdown");
+        const form = document.getElementById("subRequestForm");
+        const classSelect = document.getElementById("class");
+        const instructorSelect = document.getElementById("instructor");
+        const meetingTimeSelect = document.getElementById("meetingTime");
+        const programSelect = document.getElementById("program");
+        const classLocationInput = document.getElementById("classLocation");
+        const buildingRoomInput = document.getElementById("buildingRoom");
 
-        const PROGRAM_URLS = {
+        const CLASS_URLS = {
             ESL: "https://script.google.com/macros/s/AKfycbz8Z-NG8r0laNZkCz5ztDf2xRqtxh39N18Te7bt7MIUHYDVpp4NWgb8SNlNLy2ms8BLiQ/exec",
             HSE: "https://script.google.com/macros/s/AKfycbyM7Wn55Vl4d0jcqDvDpPB53_5IXXzueL2TDZ2JJuLIcAIHZ0tMzSzYK-Atf1ZqcHo/exec"
         };
 
-        let allData = {};
+        programSelect.addEventListener("change", async () => {
+            const program = programSelect.value;
+            if (!program) return;
 
-        function resetFormState() {
-            classDropdown.innerHTML = '<option>Loading classes...</option>';
-            instructorDropdown.innerHTML = '<option>Select a class first</option>';
-            timeDropdown.innerHTML = '<option>Select a class and instructor first</option>';
-            classDropdown.disabled = true;
-            instructorDropdown.disabled = true;
-            timeDropdown.disabled = true;
-        }
+            const url = CLASS_URLS[program];
+            const res = await fetch(url);
+            const data = await res.json();
 
-        function loadProgramData(program) {
-            resetFormState();
-            if (!program || !PROGRAM_URLS[program]) {
-                classDropdown.innerHTML = "<option>Select a valid program</option>";
-                return;
-            }
-
-            const url = PROGRAM_URLS[program] + "?ts=" + Date.now();
-
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        classDropdown.innerHTML = `<option>${data.error}</option>`;
-                        return;
-                    }
-
-                    allData = data;
-                    classDropdown.innerHTML = '<option value="">-- Select Class --</option>';
-                    Object.keys(data).forEach(cls => {
-                        const option = document.createElement("option");
-                        option.value = cls;
-                        option.textContent = cls;
-                        classDropdown.appendChild(option);
-                    });
-
-                    classDropdown.disabled = false;
-                    instructorDropdown.disabled = true;
-                    timeDropdown.disabled = true;
-                })
-                .catch(error => {
-                    console.error("Failed to load data:", error);
-                    classDropdown.innerHTML = "<option>Error loading classes</option>";
-                });
-        }
-
-        programDropdown.addEventListener("change", () => {
-            const selectedProgram = programDropdown.value;
-            loadProgramData(selectedProgram);
-        });
-
-        classDropdown.addEventListener("change", () => {
-            const selectedClass = classDropdown.value;
-            instructorDropdown.innerHTML = "";
-            timeDropdown.innerHTML = '<option>Select a class and instructor first</option>';
-            timeDropdown.disabled = true;
-
-            if (allData[selectedClass]) {
-                const instructors = Object.keys(allData[selectedClass]);
-                instructors.forEach(instructor => {
-                    const option = document.createElement("option");
-                    option.value = instructor;
-                    option.textContent = instructor;
-                    instructorDropdown.appendChild(option);
-                });
-
-                instructorDropdown.disabled = false;
-
-                if (instructors.length === 1) {
-                    instructorDropdown.selectedIndex = 0;
-                    instructorDropdown.dispatchEvent(new Event("change"));
-                }
-            } else {
-                instructorDropdown.innerHTML = '<option>No instructors found</option>';
-                instructorDropdown.disabled = true;
-            }
-        });
-
-        instructorDropdown.addEventListener("change", () => {
-            const selectedClass = classDropdown.value;
-            const selectedInstructor = instructorDropdown.value;
-            timeDropdown.innerHTML = "";
-
-            if (
-                selectedClass &&
-                selectedInstructor &&
-                allData[selectedClass] &&
-                allData[selectedClass][selectedInstructor]
-            ) {
-                const uniqueDayTimes = [...new Set(allData[selectedClass][selectedInstructor])];
-                uniqueDayTimes.forEach(dayTime => {
-                    const option = document.createElement("option");
-                    option.value = dayTime;
-                    option.textContent = dayTime;
-                    timeDropdown.appendChild(option);
-                });
-
-                timeDropdown.disabled = false;
-            } else {
-                timeDropdown.innerHTML = '<option>No meeting times found</option>';
-                timeDropdown.disabled = true;
-            }
-        });
-
-        const locationContainer = document.getElementById("locationContainer");
-        const inPersonRadio = document.getElementById("inPerson");
-        const onlineRadio = document.getElementById("online");
-        const buildingRoomInput = document.getElementById("buildingRoom");
-
-        inPersonRadio.addEventListener("change", () => {
-            locationContainer.style.display = "block";
-            buildingRoomInput.setAttribute("required", "required");
-        });
-
-        onlineRadio.addEventListener("change", () => {
-            locationContainer.style.display = "none";
-            buildingRoomInput.removeAttribute("required");
-
-            // Also uncheck location radio buttons
-            document.querySelectorAll('input[name="classLocation"]').forEach(el => el.checked = false);
-            buildingRoomInput.value = "";
-        });
-
-        document.querySelector("form").addEventListener("reset", () => {
-            allData = {};
-            classDropdown.innerHTML = '<option>Loading classes...</option>';
-            instructorDropdown.innerHTML = '<option>Select a class first</option>';
-            timeDropdown.innerHTML = '<option>Select a class and instructor first</option>';
-            classDropdown.disabled = true;
-            instructorDropdown.disabled = true;
-            timeDropdown.disabled = true;
-            programDropdown.selectedIndex = 0;
-            locationContainer.style.display = "none";
-            locationInput.removeAttribute("required");
-            locationInput.value = "";
-        });
-    </script>
-
-    <!-- Submission Script -->
-    <script>
-        const form = document.getElementById("subRequest");
-
-        form.addEventListener("submit", (e) => {
-            e.preventDefault();
-
-            const program = programDropdown.value;
-            const selectedClass = classDropdown.value;
-            const selectedInstructor = instructorDropdown.value;
-            const selectedTime = timeDropdown.value;
-            const dateNeeded = document.getElementById("dateNeeded").value;
-            const classType = document.querySelector('input[name="classType"]:checked')?.value;
-            const classLocation = document.querySelector('input[name="classLocation"]:checked')?.value;
-            const buildingRoom = document.getElementById("buildingRoom").value;
-            const teacherEmail = document.getElementById("teacherEmail").value;
-
-            if (!program || !selectedClass || !selectedInstructor || !selectedTime || !dateNeeded || !classType || !teacherEmail) {
-                alert("Please complete all fields before submitting.");
-                return;
-            }
-
-            const formData = new URLSearchParams({
-                program: program,
-                class: selectedClass,
-                instructor: selectedInstructor,
-                time: selectedTime,
-                dateNeeded: dateNeeded,
-                classType: classType,
-                classLocation: classType === "In-Person" ? classLocation || "" : "",
-                buildingRoom: classType === "In-Person" ? buildingRoom || "" : "",
-                teacherEmail: teacherEmail
+            classSelect.innerHTML = '<option value="">-- Select Class --</option>';
+            Object.keys(data).forEach(cls => {
+                const option = document.createElement("option");
+                option.value = cls;
+                option.textContent = cls;
+                classSelect.appendChild(option);
             });
+        });
 
-            fetch("https://script.google.com/macros/s/AKfycbwYgrLG1bqJCMxTJfKh2w-jjS3zGja00WQqC83Q4BfOd3t_S6pLxV9xJYnSqoY7Bsse/exec", {
+        classSelect.addEventListener("change", () => {
+            const program = programSelect.value;
+            const selectedClass = classSelect.value;
+            instructorSelect.innerHTML = '<option value="">-- Select Instructor --</option>';
+
+            if (selectedClass) {
+                fetch(CLASS_URLS[program])
+                    .then(res => res.json())
+                    .then(data => {
+                        const instructors = Object.keys(data[selectedClass] || {}).filter(k => !k.endsWith("_location"));
+                        instructors.forEach(name => {
+                            const opt = document.createElement("option");
+                            opt.value = name;
+                            opt.textContent = name;
+                            instructorSelect.appendChild(opt);
+                        });
+                    })
+                    .catch(err => {
+                        alert("There was an error loading data. Please try again later.");
+                        console.error(err);
+                    });
+            }
+        });
+
+        instructorSelect.addEventListener("change", () => {
+            const program = programSelect.value;
+            const selectedClass = classSelect.value;
+            const instructor = instructorSelect.value;
+            meetingTimeSelect.innerHTML = '<option value="">-- Select Day & Time --</option>';
+
+            if (instructor) {
+                fetch(CLASS_URLS[program])
+                    .then(res => res.json())
+                    .then(data => {
+                        const times = data[selectedClass]?.[instructor] || [];
+                        times.forEach(t => {
+                            const opt = document.createElement("option");
+                            opt.value = t;
+                            opt.textContent = t;
+                            meetingTimeSelect.appendChild(opt);
+                        });
+
+                        const loc = data[selectedClass]?.[`${instructor}_location`];
+                        if (loc) {
+                            const campus = loc.campus || "";
+                            classLocationInput.value = campus;
+                            buildingRoomInput.value = `${loc.building || ""}, room #${loc.room || ""}`.trim();
+
+                            // Set classType based on campus
+                            document.getElementById("classType").value = (campus.trim().toUpperCase() === "DIL") ? "Online" : "In-Person";
+                            // ✅ Set classCode from the data
+                            document.getElementById("classCode").value = loc.code || "";
+                        } else {
+                            classLocationInput.value = "";
+                            buildingRoomInput.value = "";
+                            document.getElementById("classType").value = "";
+                        }
+                    });
+            }
+        });
+
+        form.addEventListener("submit", async e => {
+            e.preventDefault();
+            const formData = new URLSearchParams(new FormData(form));
+            const endpoint = "https://script.google.com/macros/s/AKfycbwYgrLG1bqJCMxTJfKh2w-jjS3zGja00WQqC83Q4BfOd3t_S6pLxV9xJYnSqoY7Bsse/exec";
+            const res = await fetch(endpoint, {
                 method: "POST",
                 body: formData
-            })
-                .then(res => res.text())
-                .then(response => {
-                    if (response.includes("Success")) {
-                        const messageBox = document.getElementById("submissionMessage");
-                        messageBox.textContent = "Substitute added successfully!";
-                        form.reset();
-                        classDropdown.innerHTML = '<option>Loading classes...</option>';
-                        instructorDropdown.innerHTML = '<option>Select a class first</option>';
-                        timeDropdown.innerHTML = '<option>Select a class and instructor first</option>';
-                        classDropdown.disabled = true;
-                        instructorDropdown.disabled = true;
-                        timeDropdown.disabled = true;
-                        programDropdown.selectedIndex = 0;
-                    } else {
-                        const messageBox = document.getElementById("submissionMessage");
-                        messageBox.style.color = "red";
-                        messageBox.textContent = "Error submitting form.";
-                        console.error(response);
-                    }
-                })
-                .catch(error => {
-                    console.error("Error submitting form:", error);
-                    alert("Submission failed due to a network error.");
-                });
-        });
-    </script>
-
-    <script>
-        const links = document.querySelectorAll(".tab-link");
-        links.forEach(link => {
-            if (link.href === window.location.href) {
-                link.classList.add("active");
-            }
+            });
+            const text = await res.text();
+            alert(text.includes("Success") ? "Request submitted." : "Submission failed.");
+            form.reset();
         });
     </script>
 </body>

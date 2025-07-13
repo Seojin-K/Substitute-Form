@@ -4,6 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="request-styles.css">
+    <!-- Choices.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+
+    <!-- Choices.js JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
     <title>Substitute Update Form</title>
 </head>
 
@@ -76,30 +82,16 @@
                 <label><input type="radio" name="availabilityMode" value="Both"> Both</label>
             </div>
 
-            <label>Which campuses are you available at?</label>
-            <div class="checkbox-group" id="campusCheckboxGroup">
-                <label><input type="checkbox" name="campuses" value="Online Only"> Online Only</label>
-                <label><input type="checkbox" name="campuses" value="Highland Campus"> Highland Campus</label>
-                <label><input type="checkbox" name="campuses" value="Todos Juntos Learning Center"> Todos Juntos
-                    Learning Center</label>
-                <label><input type="checkbox" name="campuses" value="South Austin Campus"> South Austin Campus</label>
-                <label><input type="checkbox" name="campuses" value="Central Austin Campus"> Central Austin
-                    Campus</label>
-                <label><input type="checkbox" name="campuses" value="North Austin Campus"> North Austin Campus</label>
-                <label><input type="checkbox" name="campuses" value="Riverside Campus"> Riverside Campus</label>
-                <label><input type="checkbox" name="campuses" value="Eastview Campus"> Eastview Campus</label>
-                <label><input type="checkbox" name="campuses" value="Asian American Resource Center"> Asian American
-                    Resource Center</label>
-                <label><input type="checkbox" name="campuses" value="Northridge Campus"> Northridge Campus</label>
-                <label><input type="checkbox" name="campuses" value="Cypress Creek Campus"> Cypress Creek Campus</label>
-                <label><input type="checkbox" name="campuses" value="Round Rock Campus"> Round Rock Campus</label>
-                <label><input type="checkbox" name="campuses" value="Provan Opportunity Center in Pflugerville"> Provan
-                    Opportunity Center in Pflugerville</label>
+            <div class="campus-group">
+                <label for="campusSelect">Which campuses are you available at?</label>
+                <span id="campus-loading-msg">Loading campuses...</span>
+                <select id="campusSelect" name="campuses" multiple class="hidden"></select>
             </div>
 
-            <label for="classesCanTeach">Which classes can you teach?</label>
-            <div id="classesCanTeachContainer" class="checkbox-group">
-                <span>Loading classes...</span>
+            <div class="campus-group">
+                <label for="classSelect">Which classes can you teach?</label>
+                <span id="class-loading-msg">Loading classes...</span>
+                <select id="classSelect" name="classesCanTeach" multiple class="hidden"></select>
             </div>
 
             <div class="form-buttons">
@@ -129,6 +121,9 @@
             }
         }
 
+        let classChoices;
+        const classSelect = document.getElementById("classSelect");
+
         async function populateClassesCanTeach() {
             const [eslClasses, hseClasses] = await Promise.all([
                 fetchClassNames(ESL_URL),
@@ -137,25 +132,91 @@
 
             const allClasses = [...new Set([...eslClasses, ...hseClasses])].sort();
 
-            classCheckboxContainer.innerHTML = "";
+            classSelect.innerHTML = "";
 
             allClasses.forEach(cls => {
-                const label = document.createElement("label");
-                label.className = "checkbox-item";
-
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.name = "classesCanTeach";
-                checkbox.value = cls;
-
-                label.appendChild(checkbox);
-                label.append(" " + cls);
-
-                classCheckboxContainer.appendChild(label);
+                const option = document.createElement("option");
+                option.value = cls;
+                option.textContent = cls;
+                classSelect.appendChild(option);
             });
+
+            if (classChoices) classChoices.destroy();
+            classChoices = new Choices("#classSelect", {
+                removeItemButton: true,
+                shouldSort: true,
+                placeholderValue: "Select one or more classes"
+            });
+
+            // Show the field once fully loaded and styled
+            document.getElementById("class-loading-msg")?.remove();
+            classSelect.classList.remove("hidden");
         }
 
         populateClassesCanTeach();
+
+        const campusSelect = document.getElementById("campusSelect");
+
+        async function fetchCampusesFromUrl(url) {
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                const campuses = new Set();
+
+                for (const className in data) {
+                    for (const key in data[className]) {
+                        if (key.endsWith("_location")) {
+                            const campus = data[className][key]?.campus?.trim();
+                            if (campus && campus.toUpperCase() !== "DIL") {
+                                campuses.add(campus);
+                            }
+                        }
+                    }
+                }
+
+                return campuses;
+            } catch (err) {
+                console.error("Error fetching campuses from:", url, err);
+                return new Set();
+            }
+        }
+
+        let campusChoices;
+
+        async function populateCampusSelect() {
+            const [eslCampuses, hseCampuses] = await Promise.all([
+                fetchCampusesFromUrl(ESL_URL),
+                fetchCampusesFromUrl(HSE_URL)
+            ]);
+
+            const allCampuses = [...new Set([...eslCampuses, ...hseCampuses])].sort();
+
+            campusSelect.innerHTML = "";
+
+            const onlineOpt = document.createElement("option");
+            onlineOpt.value = "Online Only";
+            onlineOpt.textContent = "Online Only";
+            campusSelect.appendChild(onlineOpt);
+
+            allCampuses.forEach(campus => {
+                const option = document.createElement("option");
+                option.value = campus;
+                option.textContent = campus;
+                campusSelect.appendChild(option);
+            });
+
+            document.getElementById("campus-loading-msg")?.remove();
+            // Initialize Choices.js
+            if (campusChoices) campusChoices.destroy(); // Re-init if necessary
+            campusChoices = new Choices("#campusSelect", {
+                removeItemButton: true,
+                shouldSort: false,
+                placeholderValue: "Select one or more campuses",
+                maxItemCount: 100
+            });
+        }
+
+        populateCampusSelect();
 
         document.getElementById("subAdditionForm").addEventListener("submit", (e) => {
             e.preventDefault();
@@ -166,8 +227,8 @@
             const contactMethod = document.querySelector('input[name="contactMethod"]:checked')?.value || "";
 
             const daysAvailable = Array.from(document.querySelectorAll('input[name="daysAvailable"]:checked')).map(cb => cb.value);
-            const campuses = Array.from(document.querySelectorAll('input[name="campuses"]:checked')).map(cb => cb.value);
-            const classesCanTeach = Array.from(document.querySelectorAll('input[name="classesCanTeach"]:checked')).map(cb => cb.value);
+            const campuses = campusChoices.getValue(true);
+            const classesCanTeach = classChoices.getValue(true);
 
             let carrier = "";
             if (contactMethod.toLowerCase() === "text") {
@@ -182,7 +243,7 @@
                     }
                 }
             }
-            
+
             const timesAvailable = {};
             daysAvailable.forEach(day => {
                 const startInput = document.querySelector(`input[name="start_${day}"]`);
@@ -211,7 +272,7 @@
             }
 
             const formData = new URLSearchParams({
-                formType: "addition", 
+                formType: "addition",
                 accEmail: accEmail,
                 name: name,
                 email: accEmail,
@@ -257,7 +318,7 @@
                     console.error("Error submitting form:", error);
                 });
         });
-            
+
 
         // Format phone input
         const phoneInput = document.getElementById("phone");
@@ -291,7 +352,7 @@
                     };
                 }
             });
-            
+
             timeInputsContainer.innerHTML = "";
 
             dayCheckboxes.forEach(checkbox => {
@@ -318,7 +379,7 @@
                     endInput.name = `end_${day}`;
                     endInput.required = true;
                     endInput.value = existingTimes[day]?.end || "";
-                    
+
                     const toLabel = document.createElement("span");
                     toLabel.textContent = " to ";
                     toLabel.style.margin = "0 8px";

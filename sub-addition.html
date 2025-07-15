@@ -23,20 +23,20 @@
             <input type="email" id="accEmail" name="accEmail" required placeholder="yourname@austincc.edu">
             <span id="accEmailError" style="color: red; display: none;">ACC email must end in @austincc.edu</span>
 
-            <label for="name">Substitute Name:</label><br>
-            <input type="text" id="name" name="name" required><br><br>
+            <label for="name">Substitute Name:</label>
+            <input type="text" id="name" name="name" required>
 
-            <label for="phone">Phone Number:</label><br>
-            <input type="tel" id="phone" name="phone" required maxlength="14" placeholder="(XXX) XXX-XXXX"><br><br>
+            <label for="phone">Phone Number:</label>
+            <input type="tel" id="phone" name="phone" required maxlength="14" placeholder="(XXX) XXX-XXXX">
 
-            <label>Preferred Method of Contact:</label><br>
+            <label>Preferred Method of Contact:</label>
             <div class="radio-group">
                 <input type="radio" id="contact-email" name="contactMethod" value="email"><label>Email</label>
                 <input type="radio" id="contact-text" name="contactMethod" value="text"><label>Text</label>
             </div>
 
             <div id="carrier-container" style="display:none;">
-                <label for="carrier-select">Phone Carrier:</label><br>
+                <label for="carrier-select">Phone Carrier:</label>
                 <select id="carrier-select" name="carrier">
                     <option value="">-- Select a carrier --</option>
                     <option value="Verizon">Verizon</option>
@@ -49,11 +49,11 @@
                     <option value="Google Fi">Google Fi</option>
                     <option value="US Cellular">US Cellular</option>
                     <option value="Other">Other</option>
-                </select><br><br>
+                </select>
 
                 <div id="other-carrier-container" style="display:none;">
-                    <label for="other-carrier">Please specify Carrier:</label><br>
-                    <input type="text" id="other-carrier" name="otherCarrier" placeholder="Enter your carrier"><br><br>
+                    <label for="other-carrier">Please specify Carrier:</label>
+                    <input type="text" id="other-carrier" name="otherCarrier" placeholder="Enter your carrier">
                 </div>
             </div>
 

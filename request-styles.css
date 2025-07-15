@@ -14,9 +14,7 @@ body {
     width: 100%;
     max-width: 500px;
     margin: 0 auto;
-    /* center horizontally */
     text-align: center;
-    /* center text */
 }
 
 .form-container input[type="text"],
@@ -33,7 +31,6 @@ body {
     border: 1px solid #ccc;
     box-sizing: border-box;
     text-align: left;
-    /* keep typing aligned left */
 }
 
 .form-container label {
@@ -45,30 +42,11 @@ body {
     color: #333;
 }
 
-/* Ensures page content stacks vertically */
 .page-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 40px 20px;
-}
-
-/* Horizontal tab bar */
-.tab-nav {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-/* Tab links look like tabs */
-.tab-link {
-    padding: 10px 20px;
-    background-color: #e0e0e0;
-    text-decoration: none;
-    color: #333;
-    border-radius: 6px 6px 0 0;
-    font-weight: bold;
 }
 
 @keyframes spin {
@@ -102,21 +80,6 @@ body {
     box-sizing: border-box;
 }
 
-.tab-link.active {
-    background-color: #ffffff;
-    border-bottom: 2px solid white;
-}
-
-/* Form container styling */
-.form-container {
-    background-color: #ffffff;
-    padding: 30px 40px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 600px;
-}
-
 h1 {
     text-align: center;
     margin-bottom: 30px;
@@ -128,7 +91,6 @@ label {
     display: block;
     margin-top: 20px;
     margin-bottom: 6px;
-    /* smaller gap below question */
     font-weight: bold;
     color: #333;
 }
@@ -160,7 +122,6 @@ select {
     justify-content: center;
     flex-wrap: wrap;
     gap: 50px;
-    /* controls spacing between Email/Text */
     margin-top: 10px;
     margin-bottom: 15px;
     align-items: center;
@@ -188,7 +149,6 @@ select {
     gap: 6px;
     font-weight: normal;
     margin: 0;
-    /* ✅ resets default spacing */
     padding: 0;
 }
 
@@ -263,4 +223,33 @@ form button {
     margin-right: 10px;
     padding: 10px 20px;
     border-radius: 6px;
+}
+
+.form-container form > *:not(:last-child) {
+    margin-bottom: 20px;
+}
+
+.radio-group label,
+.checkbox-group label {
+    margin-bottom: 0;
+    line-height: 1.5;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+    margin-right: 6px;
+    vertical-align: middle;
+    transform: none;
+}
+
+.radio-group,
+.checkbox-group {
+    margin-top: 0;
+    margin-bottom: 10px;
+    gap: 20px;
+}
+
+.form-container label {
+    margin-top: 12px;
+    margin-bottom: 6px;
 }

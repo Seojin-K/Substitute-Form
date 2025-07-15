@@ -133,11 +133,22 @@
                 fetchClassNames(HSE_URL)
             ]);
 
-            const allClasses = [...new Set([...eslClasses, ...hseClasses])].sort();
+            const allClassesRaw = [...eslClasses, ...hseClasses];
+
+            const seen = new Map(); // key: lowercase class, value: original casing
+
+            allClassesRaw.forEach(cls => {
+                const lower = cls.toLowerCase();
+                if (!seen.has(lower)) {
+                    seen.set(lower, cls);
+                }
+            });
+
+            const uniqueClasses = Array.from(seen.values()).sort();
 
             classSelect.innerHTML = "";
 
-            allClasses.forEach(cls => {
+            uniqueClasses.forEach(cls => {
                 const option = document.createElement("option");
                 option.value = cls;
                 option.textContent = cls;
@@ -151,7 +162,6 @@
                 placeholderValue: "Select one or more classes"
             });
 
-            // Show the field once fully loaded and styled
             document.getElementById("class-loading-msg")?.remove();
             classSelect.classList.remove("hidden");
         }
@@ -192,16 +202,28 @@
                 fetchCampusesFromUrl(HSE_URL)
             ]);
 
-            const allCampuses = [...new Set([...eslCampuses, ...hseCampuses])].sort();
+            const allRaw = [...eslCampuses, ...hseCampuses];
+
+            const seen = new Map(); // key: lowercase campus name, value: original casing
+
+            allRaw.forEach(campus => {
+                const normalized = campus.toLowerCase();
+                if (!seen.has(normalized)) {
+                    seen.set(normalized, campus);
+                }
+            });
+
+            const uniqueCampuses = Array.from(seen.values()).sort();
 
             campusSelect.innerHTML = "";
 
+            // Always include "Online Only" option first
             const onlineOpt = document.createElement("option");
             onlineOpt.value = "Online Only";
             onlineOpt.textContent = "Online Only";
             campusSelect.appendChild(onlineOpt);
 
-            allCampuses.forEach(campus => {
+            uniqueCampuses.forEach(campus => {
                 const option = document.createElement("option");
                 option.value = campus;
                 option.textContent = campus;
@@ -209,8 +231,8 @@
             });
 
             document.getElementById("campus-loading-msg")?.remove();
-            // Initialize Choices.js
-            if (campusChoices) campusChoices.destroy(); // Re-init if necessary
+
+            if (campusChoices) campusChoices.destroy();
             campusChoices = new Choices("#campusSelect", {
                 removeItemButton: true,
                 shouldSort: false,

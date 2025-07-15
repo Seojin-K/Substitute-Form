@@ -8,6 +8,8 @@ body {
 
 .form-container {
     background-color: #ffffff;
+    overflow: visible !important;
+    position: relative;
     padding: 30px 40px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -74,10 +76,16 @@ body {
     box-sizing: border-box;
 }
 
-.campus-group .choices__list--dropdown {
-    max-height: 250px;
+.choices__list--dropdown {
+    max-height: 300px;
     overflow-y: auto;
-    box-sizing: border-box;
+    z-index: 9999;
+}
+
+.choices__list--dropdown.is-active {
+    visibility: visible;
+    opacity: 1;
+    position: absolute;
 }
 
 h1 {

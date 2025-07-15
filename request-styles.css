@@ -71,6 +71,12 @@ body {
     font-weight: bold;
 }
 
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .campus-group .choices {
     max-width: 400px;
     width: 100%;

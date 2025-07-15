@@ -41,6 +41,13 @@
                 <button type="submit">Submit</button>
                 <button type="reset">Reset</button>
             </div>
+
+            <div id="loadingIndicator" style="display: none; margin-top: 1em; font-weight: bold;">
+                <div class="spinner"
+                    style="display: inline-block; width: 16px; height: 16px; border: 2px solid #ccc; border-top-color: #333; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px;">
+                </div>
+                <span>Submitting... Please wait.</span>
+            </div>
         </form>
     </div>
 
@@ -63,6 +70,7 @@
             if (!program) return;
 
             const url = CLASS_URLS[program];
+            classSelect.innerHTML = '<option value="">Loading classes...</option>';
             const res = await fetch(url);
             const data = await res.json();
 
@@ -78,12 +86,14 @@
         classSelect.addEventListener("change", () => {
             const program = programSelect.value;
             const selectedClass = classSelect.value;
-            instructorSelect.innerHTML = '<option value="">-- Select Instructor --</option>';
+
+            instructorSelect.innerHTML = '<option value="">Loading instructors...</option>';
 
             if (selectedClass) {
                 fetch(CLASS_URLS[program])
                     .then(res => res.json())
                     .then(data => {
+                        instructorSelect.innerHTML = '<option value="">-- Select Instructor --</option>';
                         const instructors = Object.keys(data[selectedClass] || {}).filter(k => !k.endsWith("_location"));
                         instructors.forEach(name => {
                             const opt = document.createElement("option");
@@ -103,12 +113,14 @@
             const program = programSelect.value;
             const selectedClass = classSelect.value;
             const instructor = instructorSelect.value;
-            meetingTimeSelect.innerHTML = '<option value="">-- Select Day & Time --</option>';
+
+            meetingTimeSelect.innerHTML = '<option value="">Loading times...</option>';
 
             if (instructor) {
                 fetch(CLASS_URLS[program])
                     .then(res => res.json())
                     .then(data => {
+                        meetingTimeSelect.innerHTML = '<option value="">-- Select Day & Time --</option>';
                         const times = data[selectedClass]?.[instructor] || [];
                         times.forEach(t => {
                             const opt = document.createElement("option");
@@ -138,15 +150,23 @@
 
         form.addEventListener("submit", async e => {
             e.preventDefault();
+            document.getElementById("loadingIndicator").style.display = "block";
             const formData = new URLSearchParams(new FormData(form));
             const endpoint = "https://script.google.com/macros/s/AKfycbwYgrLG1bqJCMxTJfKh2w-jjS3zGja00WQqC83Q4BfOd3t_S6pLxV9xJYnSqoY7Bsse/exec";
-            const res = await fetch(endpoint, {
-                method: "POST",
-                body: formData
-            });
-            const text = await res.text();
-            alert(text.includes("Success") ? "Request submitted." : "Submission failed.");
-            form.reset();
+            try {
+                const res = await fetch(endpoint, {
+                    method: "POST",
+                    body: formData
+                });
+                const text = await res.text();
+                alert(text.includes("Success") ? "Request submitted." : "Submission failed.");
+                form.reset();
+            } catch (error) {
+                alert("Submission failed due to a network error.");
+                console.error(error);
+            } finally {
+                document.getElementById("loadingIndicator").style.display = "none";
+            }
         });
     </script>
 </body>

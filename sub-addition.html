@@ -15,14 +15,9 @@
 
 <body>
     <div class="form-container">
-        <!-- <nav class="tab-nav">
-            <a href="sub-request.html" class="tab-link">Substitute Request</a>
-            <a href="sub-addition.html" class="tab-link">Substitute Update</a>
-        </nav> -->
 
         <form id="subAdditionForm" method="POST"
             action="https://script.google.com/macros/s/AKfycbwYgrLG1bqJCMxTJfKh2w-jjS3zGja00WQqC83Q4BfOd3t_S6pLxV9xJYnSqoY7Bsse/exec">
-            <!--<h1>Substitute Update Form</h1>-->
 
             <label for="accEmail">ACC Email:</label>
             <input type="email" id="accEmail" name="accEmail" required placeholder="yourname@austincc.edu">
@@ -98,6 +93,14 @@
                 <button type="submit">Submit</button>
                 <button type="reset">Reset</button>
             </div>
+
+            <div id="loadingIndicator" style="display: none; font-weight: bold; margin-top: 1em;">
+                <div class="spinner"
+                    style="display:inline-block;width:16px;height:16px;border:2px solid #ccc;border-top-color:#333;border-radius:50%;animation:spin 1s linear infinite;margin-right:8px;">
+                </div>
+                <span>Submitting... Please wait.</span>
+            </div>
+
             <div id="submissionMessage" style="color: green; font-weight: bold; margin-top: 1em;"></div>
         </form>
     </div>
@@ -221,6 +224,9 @@
         document.getElementById("subAdditionForm").addEventListener("submit", (e) => {
             e.preventDefault();
 
+            const loading = document.getElementById("loadingIndicator");
+            loading.style.display = "block";
+
             const accEmail = document.getElementById("accEmail").value.trim();
             const name = document.getElementById("name").value.trim();
             const phone = document.getElementById("phone").value.trim();
@@ -257,17 +263,20 @@
 
             if (!accEmail.toLowerCase().endsWith("@austincc.edu")) {
                 alert("Please enter a valid ACC email ending in @austincc.edu");
+                loading.style.display = "none";
                 return;
             }
 
             if (!name || !accEmail || !phone || !contactMethod) {
                 alert("Please fill in all required fields.");
+                loading.style.display = "none";
                 return;
             }
 
             const numericPhone = phone.replace(/\D/g, "");
             if (numericPhone.length > 10) {
                 alert("Phone number must be 10 digits or fewer.");
+                loading.style.display = "none";
                 return;
             }
 
@@ -293,6 +302,7 @@
                 .then(response => response.text())
                 .then(result => {
                     const messageBox = document.getElementById("submissionMessage");
+                    loading.style.display = "none";
                     if (result.includes("Substitute added successfully")) {
                         messageBox.textContent = "Substitute added successfully!";
                         messageBox.scrollIntoView({ behavior: "smooth" });
@@ -312,6 +322,7 @@
                 })
                 .catch(error => {
                     const messageBox = document.getElementById("submissionMessage");
+                    loading.style.display = "none";
                     messageBox.style.color = "red";
                     messageBox.textContent = "Error submitting form.";
                     messageBox.scrollIntoView({ behavior: "smooth" });

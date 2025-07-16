@@ -139,7 +139,6 @@
 
                             // Set classType based on campus
                             document.getElementById("classType").value = (campus.trim().toUpperCase() === "DIL") ? "Online" : "In-Person";
-                            // ✅ Set classCode from the data
                             document.getElementById("classCode").value = loc.code || "";
                         } else {
                             classLocationInput.value = "";
@@ -154,7 +153,7 @@
             e.preventDefault();
             document.getElementById("loadingIndicator").style.display = "block";
             const formData = new URLSearchParams(new FormData(form));
-            const endpoint = https://script.google.com/macros/s/AKfycbyYerBwPMFC7IikYn0i3CAkOO9xN0ziTF9XagWGiskyxQ3e6fGQ5KRGbwr_4lOV5ULD5Q/exec";
+            const endpoint = "https://script.google.com/macros/s/AKfycbyYerBwPMFC7IikYn0i3CAkOO9xN0ziTF9XagWGiskyxQ3e6fGQ5KRGbwr_4lOV5ULD5Q/exec";
             try {
                 const res = await fetch(endpoint, {
                     method: "POST",

@@ -197,13 +197,15 @@
         let campusChoices;
 
         async function populateCampusSelect() {
-            const [eslCampuses, hseCampuses] = await Promise.all([
+            /* const [eslCampuses, hseCampuses] = await Promise.all([
                 fetchCampusesFromUrl(ESL_URL),
                 fetchCampusesFromUrl(HSE_URL)
             ]);
 
             const allRaw = [...eslCampuses, ...hseCampuses];
-
+            */
+           const eslCampuses = await fetchCampusesFromUrl(ESL_URL);
+            const allRaw = [...eslCampuses];
             const seen = new Map(); // key: lowercase campus name, value: original casing
 
             allRaw.forEach(campus => {

@@ -329,18 +329,15 @@
                     loading.style.display = "none";
                     if (result.includes("Substitute added successfully")) {
                         messageBox.textContent = "Substitute added successfully!";
-                        messageBox.scrollIntoView({ behavior: "smooth" });
                         e.target.reset();
                         document.getElementById("timeInputsContainer").innerHTML = "";
                     } else if (result.includes("Information updated")) {
                         messageBox.textContent = "Information updated successfully!";
-                        messageBox.scrollIntoView({ behavior: "smooth" });
                         e.target.reset();
                         document.getElementById("timeInputsContainer").innerHTML = "";
                     } else {
                         messageBox.style.color = "red";
                         messageBox.textContent = "Submission failed. Please try again.";
-                        messageBox.scrollIntoView({ behavior: "smooth" });
                         console.error(result);
                     }
                 })
@@ -349,7 +346,6 @@
                     loading.style.display = "none";
                     messageBox.style.color = "red";
                     messageBox.textContent = "Error submitting form.";
-                    messageBox.scrollIntoView({ behavior: "smooth" });
                     console.error("Error submitting form:", error);
                 });
         });

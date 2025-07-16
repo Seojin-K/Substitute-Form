@@ -48,6 +48,8 @@
                 </div>
                 <span>Submitting... Please wait.</span>
             </div>
+
+            <div id="submissionMessage" style="color: green; font-weight: bold; margin-top: 1em;"></div>
         </form>
     </div>
 
@@ -159,10 +161,14 @@
                     body: formData
                 });
                 const text = await res.text();
+                const messageBox = document.getElementById("submissionMessage");
+                messageBox.textContent = text.includes("Success")? "Request successfully recorded." : "Submission failed.";
                 alert(text.includes("Success") ? "Request submitted." : "Submission failed.");
                 form.reset();
             } catch (error) {
                 alert("Submission failed due to a network error.");
+                const messageBox = document.getElementById("submissionMessage");
+                messageBox.textContent = "Submission failed due to network error.";
                 console.error(error);
             } finally {
                 document.getElementById("loadingIndicator").style.display = "none";

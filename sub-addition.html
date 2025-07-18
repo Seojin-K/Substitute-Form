@@ -26,37 +26,6 @@
             <label for="name">Substitute Name:</label>
             <input type="text" id="name" name="name" required>
 
-            <label for="phone">Phone Number:</label>
-            <input type="tel" id="phone" name="phone" required maxlength="14" placeholder="(XXX) XXX-XXXX">
-
-            <label>Preferred Method of Contact:</label>
-            <div class="radio-group">
-                <input type="radio" id="contact-email" name="contactMethod" value="email"><label>Email</label>
-                <input type="radio" id="contact-text" name="contactMethod" value="text"><label>Text</label>
-            </div>
-
-            <div id="carrier-container" style="display:none;">
-                <label for="carrier-select">Phone Carrier:</label>
-                <select id="carrier-select" name="carrier">
-                    <option value="">-- Select a carrier --</option>
-                    <option value="Verizon">Verizon</option>
-                    <option value="AT&T">AT&T</option>
-                    <option value="T-Mobile">T-Mobile</option>
-                    <option value="Sprint">Sprint</option>
-                    <option value="Boost Mobile">Boost Mobile</option>
-                    <option value="Cricket Wireless">Cricket Wireless</option>
-                    <option value="Metro by T-Mobile">Metro by T-Mobile</option>
-                    <option value="Google Fi">Google Fi</option>
-                    <option value="US Cellular">US Cellular</option>
-                    <option value="Other">Other</option>
-                </select>
-
-                <div id="other-carrier-container" style="display:none;">
-                    <label for="other-carrier">Please specify Carrier:</label>
-                    <input type="text" id="other-carrier" name="otherCarrier" placeholder="Enter your carrier">
-                </div>
-            </div>
-
             <label>Days Available to Sub:</label>
             <div class="checkbox-group">
                 <label><input type="checkbox" name="daysAvailable" value="Mon"> Mon</label>
@@ -253,26 +222,12 @@
 
             const accEmail = document.getElementById("accEmail").value.trim();
             const name = document.getElementById("name").value.trim();
-            const phone = document.getElementById("phone").value.trim();
-            const contactMethod = document.querySelector('input[name="contactMethod"]:checked')?.value || "";
+            const phone = "N/A";
+            const contactMethod = "email";
 
             const daysAvailable = Array.from(document.querySelectorAll('input[name="daysAvailable"]:checked')).map(cb => cb.value);
             const campuses = campusChoices.getValue(true);
             const classesCanTeach = classChoices.getValue(true);
-
-            let carrier = "";
-            if (contactMethod.toLowerCase() === "text") {
-                const selectEl = document.getElementById("carrier-select");
-                if (selectEl) {
-                    carrier = selectEl.value.trim();
-                    if (carrier === "Other") {
-                        const other = document.getElementById("other-carrier");
-                        if (other && other.value.trim()) {
-                            carrier = other.value.trim();
-                        }
-                    }
-                }
-            }
 
             const timesAvailable = {};
             daysAvailable.forEach(day => {
@@ -291,18 +246,12 @@
                 return;
             }
 
-            if (!name || !accEmail || !phone || !contactMethod) {
+            if (!name || !accEmail || !contactMethod) {
                 alert("Please fill in all required fields.");
                 loading.style.display = "none";
                 return;
             }
 
-            const numericPhone = phone.replace(/\D/g, "");
-            if (numericPhone.length > 10) {
-                alert("Phone number must be 10 digits or fewer.");
-                loading.style.display = "none";
-                return;
-            }
 
             const formData = new URLSearchParams({
                 formType: "addition",
@@ -310,7 +259,6 @@
                 name: name,
                 email: accEmail,
                 phone: phone,
-                carrier: carrier,
                 contactMethod: contactMethod,
                 daysAvailable: daysAvailable.join(", "),
                 timesAvailable: JSON.stringify(timesAvailable),
@@ -348,21 +296,6 @@
                     messageBox.textContent = "Error submitting form.";
                     console.error("Error submitting form:", error);
                 });
-        });
-
-
-        // Format phone input
-        const phoneInput = document.getElementById("phone");
-        phoneInput.addEventListener("input", (e) => {
-            let digits = e.target.value.replace(/\D/g, "");
-            if (digits.length > 10) digits = digits.slice(0, 10);
-
-            let formatted = "";
-            if (digits.length > 0) formatted += "(" + digits.slice(0, 3);
-            if (digits.length >= 4) formatted += ") " + digits.slice(3, 6);
-            if (digits.length >= 7) formatted += "-" + digits.slice(6, 10);
-
-            e.target.value = formatted;
         });
 
         // === Time picker rendering ===
@@ -433,50 +366,6 @@
             if (link.href === window.location.href) {
                 link.classList.add("active");
             }
-        });
-    </script>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const emailRadio = document.getElementById("contact-email");
-            const textRadio = document.getElementById("contact-text");
-            const carrierContainer = document.getElementById("carrier-container");
-
-            function updateCarrierVisibility() {
-                if (textRadio.checked) {
-                    carrierContainer.style.display = "block";
-                } else {
-                    carrierContainer.style.display = "none";
-                }
-            }
-
-            emailRadio.addEventListener("change", updateCarrierVisibility);
-            textRadio.addEventListener("change", updateCarrierVisibility);
-        });
-    </script>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const textRadio = document.getElementById("contact-text");
-            const emailRadio = document.getElementById("contact-email");
-            const carrierContainer = document.getElementById("carrier-container");
-            const carrierSelect = document.getElementById("carrier-select");
-            const otherCarrierContainer = document.getElementById("other-carrier-container");
-
-            function updateCarrierVisibility() {
-                carrierContainer.style.display = textRadio.checked ? "block" : "none";
-            }
-
-            function updateOtherCarrierVisibility() {
-                otherCarrierContainer.style.display = carrierSelect.value === "Other" ? "block" : "none";
-            }
-
-            textRadio.addEventListener("change", updateCarrierVisibility);
-            emailRadio.addEventListener("change", updateCarrierVisibility);
-            carrierSelect.addEventListener("change", updateOtherCarrierVisibility);
-
-            updateCarrierVisibility();
-            updateOtherCarrierVisibility();
         });
     </script>
 </body>

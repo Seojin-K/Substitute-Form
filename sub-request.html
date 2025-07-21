@@ -37,6 +37,9 @@
             <label for="teacherEmail">Your ACC Email:</label>
             <input type="email" id="teacherEmail" name="teacherEmail" required placeholder="yourname@austincc.edu">
 
+            <label for="note">Additional Note (optional):</label>
+            <input type="text" id="note" name="note" placeholder="Enter any additional info...">
+
             <div class="form-buttons">
                 <button type="submit">Submit</button>
                 <button type="reset">Reset</button>
@@ -161,7 +164,7 @@
                 });
                 const text = await res.text();
                 const messageBox = document.getElementById("submissionMessage");
-                messageBox.textContent = text.includes("Success")? "Request successfully recorded." : "Submission failed.";
+                messageBox.textContent = text.includes("Success") ? "Request successfully recorded." : "Submission failed.";
                 alert(text.includes("Success") ? "Request submitted." : "Submission failed.");
                 form.reset();
             } catch (error) {

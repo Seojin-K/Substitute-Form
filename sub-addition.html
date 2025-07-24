@@ -174,7 +174,7 @@
 
             const allRaw = [...eslCampuses, ...hseCampuses];
             */
-           const eslCampuses = await fetchCampusesFromUrl(ESL_URL);
+            const eslCampuses = await fetchCampusesFromUrl(ESL_URL);
             const allRaw = [...eslCampuses];
             const seen = new Map(); // key: lowercase campus name, value: original casing
 
@@ -270,25 +270,16 @@
 
             fetch("https://script.google.com/macros/s/AKfycbyYerBwPMFC7IikYn0i3CAkOO9xN0ziTF9XagWGiskyxQ3e6fGQ5KRGbwr_4lOV5ULD5Q/exec", {
                 method: "POST",
-                body: formData
+                body: formData,
+                mode: "no-cors"
             })
-                .then(response => response.text())
-                .then(result => {
+                .then(() => {
                     const messageBox = document.getElementById("submissionMessage");
                     loading.style.display = "none";
-                    if (result.includes("Substitute added successfully")) {
-                        messageBox.textContent = "Substitute added successfully!";
-                        e.target.reset();
-                        document.getElementById("timeInputsContainer").innerHTML = "";
-                    } else if (result.includes("Information updated")) {
-                        messageBox.textContent = "Information updated successfully!";
-                        e.target.reset();
-                        document.getElementById("timeInputsContainer").innerHTML = "";
-                    } else {
-                        messageBox.style.color = "red";
-                        messageBox.textContent = "Submission failed. Please try again.";
-                        console.error(result);
-                    }
+                    messageBox.style.color = "green";
+                    messageBox.textContent = "Submission sent successfully!";
+                    additionForm.reset();
+                    document.getElementById("timeInputsContainer").innerHTML = "";
                 })
                 .catch(error => {
                     const messageBox = document.getElementById("submissionMessage");

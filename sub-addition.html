@@ -77,8 +77,9 @@
     <script>
         const additionForm = document.getElementById("subAdditionForm");
 
-        const ESL_URL = "https://script.google.com/macros/s/AKfycbz8Z-NG8r0laNZkCz5ztDf2xRqtxh39N18Te7bt7MIUHYDVpp4NWgb8SNlNLy2ms8BLiQ/exec";
-        const HSE_URL = "https://script.google.com/macros/s/AKfycbyM7Wn55Vl4d0jcqDvDpPB53_5IXXzueL2TDZ2JJuLIcAIHZ0tMzSzYK-Atf1ZqcHo/exec";
+        const ESL_URL = "https://script.google.com/macros/s/AKfycbyn9YROZy3Q-Jn1ZU0kgzjw9097rUIV-_uvf6IOCRkJk236v3Ng5REFvuDkLRQP4AN7/exec";
+        const HSE_URL = "https://script.google.com/macros/s/AKfycbxyVB5Hce9AUQ56RVtF9ayaWvbM0A_xq96Gag10zjB0Cz23ePnyuNNjrR2xZ9ypQeLr/exec";
+        const CPW_URL = "https://script.google.com/macros/s/AKfycbyt5xXy9dT_Lchc1NuDfv6LCGUHDGXH9k1Dgg6jczyPF-jZuB0kpVzY7dmDQE6wpa4i/exec";
 
         const classCheckboxContainer = document.getElementById("classesCanTeachContainer");
 
@@ -97,12 +98,13 @@
         const classSelect = document.getElementById("classSelect");
 
         async function populateClassesCanTeach() {
-            const [eslClasses, hseClasses] = await Promise.all([
+            const [eslClasses, hseClasses, cpwClasses] = await Promise.all([
                 fetchClassNames(ESL_URL),
-                fetchClassNames(HSE_URL)
+                fetchClassNames(HSE_URL),
+                fetchClassNames(CPW_URL)
             ]);
 
-            const allClassesRaw = [...eslClasses, ...hseClasses];
+            const allClassesRaw = [...eslClasses, ...hseClasses, ...cpwClasses];
 
             const seen = new Map(); // key: lowercase class, value: original casing
 

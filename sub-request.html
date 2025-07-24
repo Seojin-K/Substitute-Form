@@ -15,6 +15,7 @@
                 <option value="">-- Select Program --</option>
                 <option value="ESL">ESL</option>
                 <option value="HSE">HSE</option>
+                <option value="CPW">CPW</option>
             </select>
 
             <label for="class">Class:</label>
@@ -37,7 +38,8 @@
             <label for="teacherEmail">Your ACC Email:</label>
             <input type="email" id="teacherEmail" name="teacherEmail" required placeholder="yourname@austincc.edu">
 
-            <label for="note">Additional Note (optional):</label>
+            <label for="note">Additional Note (If you need this sub in the next term, not the current term, or if you have a specific sub
+                in your mind, please leave a message here.):</label>
             <input type="text" id="note" name="note" placeholder="Enter any additional info...">
 
             <div class="form-buttons">
@@ -66,8 +68,9 @@
         const buildingRoomInput = document.getElementById("buildingRoom");
 
         const CLASS_URLS = {
-            ESL: "https://script.google.com/macros/s/AKfycbz8Z-NG8r0laNZkCz5ztDf2xRqtxh39N18Te7bt7MIUHYDVpp4NWgb8SNlNLy2ms8BLiQ/exec",
-            HSE: "https://script.google.com/macros/s/AKfycbyM7Wn55Vl4d0jcqDvDpPB53_5IXXzueL2TDZ2JJuLIcAIHZ0tMzSzYK-Atf1ZqcHo/exec"
+            ESL: "https://script.google.com/macros/s/AKfycbyn9YROZy3Q-Jn1ZU0kgzjw9097rUIV-_uvf6IOCRkJk236v3Ng5REFvuDkLRQP4AN7/exec",
+            HSE: "https://script.google.com/macros/s/AKfycbxyVB5Hce9AUQ56RVtF9ayaWvbM0A_xq96Gag10zjB0Cz23ePnyuNNjrR2xZ9ypQeLr/exec",
+            CPW: "https://script.google.com/macros/s/AKfycbyt5xXy9dT_Lchc1NuDfv6LCGUHDGXH9k1Dgg6jczyPF-jZuB0kpVzY7dmDQE6wpa4i/exec"
         };
 
         programSelect.addEventListener("change", async () => {

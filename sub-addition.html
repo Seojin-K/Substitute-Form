@@ -22,6 +22,9 @@
             <input type="email" id="accEmail" name="accEmail" required placeholder="yourname@austincc.edu">
             <span id="accEmailError" style="color: red; display: none;">ACC email must end in @austincc.edu</span>
 
+            <label for="phone">Phone Number:</label>
+            <input type="tel" id="phone" name="phone" placeholder="123-456-7890" required>
+
             <label for="name">Substitute Name:</label>
             <input type="text" id="name" name="name" required>
 
@@ -223,7 +226,7 @@
 
             const accEmail = document.getElementById("accEmail").value.trim();
             const name = document.getElementById("name").value.trim();
-            const phone = "N/A";
+            const phone = document.getElementById("phone").value.trim();
             const contactMethod = "email";
 
             const daysAvailable = Array.from(document.querySelectorAll('input[name="daysAvailable"]:checked')).map(cb => cb.value);

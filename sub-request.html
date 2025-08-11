@@ -73,88 +73,122 @@
             CPW: "https://script.google.com/macros/s/AKfycbyt5xXy9dT_Lchc1NuDfv6LCGUHDGXH9k1Dgg6jczyPF-jZuB0kpVzY7dmDQE6wpa4i/exec"
         };
 
+        const cacheBust = (url) => `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`;
+        const jsonFetch = (url) => fetch(cacheBust(url), { cache: "no-store" }).then(r => r.json());
+
+        // ---------- Populate Classes when Program changes ----------
         programSelect.addEventListener("change", async () => {
             const program = programSelect.value;
+            classSelect.innerHTML = "";
+            instructorSelect.innerHTML = "";
+            meetingTimeSelect.innerHTML = "";
+            classLocationInput.value = "";
+            buildingRoomInput.value = "";
+            document.getElementById("classType").value = "";
+            document.getElementById("classCode").value = "";
+
             if (!program) return;
 
             const url = CLASS_URLS[program];
             classSelect.innerHTML = '<option value="">Loading classes...</option>';
-            const res = await fetch(url);
-            const data = await res.json();
-
-            classSelect.innerHTML = '<option value="">-- Select Class --</option>';
-            Object.keys(data).forEach(cls => {
-                const option = document.createElement("option");
-                option.value = cls;
-                option.textContent = cls;
-                classSelect.appendChild(option);
-            });
+            try {
+                const data = await jsonFetch(url);
+                classSelect.innerHTML = '<option value="">-- Select Class --</option>';
+                Object.keys(data).forEach(cls => {
+                    const option = document.createElement("option");
+                    option.value = cls;
+                    option.textContent = cls;
+                    classSelect.appendChild(option);
+                });
+            } catch (e) {
+                classSelect.innerHTML = '<option value="">Failed to load classes</option>';
+                console.error(e);
+            }
         });
 
+        // ---------- Populate Instructors when Class changes ----------
         classSelect.addEventListener("change", () => {
             const program = programSelect.value;
             const selectedClass = classSelect.value;
 
+            instructorSelect.innerHTML = "";
+            meetingTimeSelect.innerHTML = "";
+            classLocationInput.value = "";
+            buildingRoomInput.value = "";
+            document.getElementById("classType").value = "";
+            document.getElementById("classCode").value = "";
+
+            if (!program || !selectedClass) return;
+
             instructorSelect.innerHTML = '<option value="">Loading instructors...</option>';
 
-            if (selectedClass) {
-                fetch(CLASS_URLS[program])
-                    .then(res => res.json())
-                    .then(data => {
-                        instructorSelect.innerHTML = '<option value="">-- Select Instructor --</option>';
-                        const instructors = Object.keys(data[selectedClass] || {}).filter(k => !k.endsWith("_location"));
-                        instructors.forEach(name => {
-                            const opt = document.createElement("option");
-                            opt.value = name;
-                            opt.textContent = name;
-                            instructorSelect.appendChild(opt);
-                        });
-                    })
-                    .catch(err => {
-                        alert("There was an error loading data. Please try again later.");
-                        console.error(err);
+            jsonFetch(CLASS_URLS[program])
+                .then(data => {
+                    instructorSelect.innerHTML = '<option value="">-- Select Instructor --</option>';
+                    const instructors = Object.keys(data[selectedClass] || {}).filter(k => !k.endsWith("_location"));
+                    instructors.forEach(name => {
+                        const opt = document.createElement("option");
+                        opt.value = name;
+                        opt.textContent = name;
+                        instructorSelect.appendChild(opt);
                     });
-            }
+                })
+                .catch(err => {
+                    alert("There was an error loading data. Please try again later.");
+                    console.error(err);
+                    instructorSelect.innerHTML = '<option value="">(load failed)</option>';
+                });
         });
 
+        // ---------- Populate Meeting Times & Hidden Fields when Instructor changes ----------
         instructorSelect.addEventListener("change", () => {
             const program = programSelect.value;
             const selectedClass = classSelect.value;
             const instructor = instructorSelect.value;
 
+            meetingTimeSelect.innerHTML = "";
+            classLocationInput.value = "";
+            buildingRoomInput.value = "";
+            document.getElementById("classType").value = "";
+            document.getElementById("classCode").value = "";
+
+            if (!program || !selectedClass || !instructor) return;
+
             meetingTimeSelect.innerHTML = '<option value="">Loading times...</option>';
 
-            if (instructor) {
-                fetch(CLASS_URLS[program])
-                    .then(res => res.json())
-                    .then(data => {
-                        meetingTimeSelect.innerHTML = '<option value="">-- Select Day & Time --</option>';
-                        const times = data[selectedClass]?.[instructor] || [];
-                        times.forEach(t => {
-                            const opt = document.createElement("option");
-                            opt.value = t;
-                            opt.textContent = t;
-                            meetingTimeSelect.appendChild(opt);
-                        });
-
-                        const loc = data[selectedClass]?.[`${instructor}_location`];
-                        if (loc) {
-                            const campus = loc.campus || "";
-                            classLocationInput.value = campus;
-                            buildingRoomInput.value = `${loc.building || ""}, room #${loc.room || ""}`.trim();
-
-                            // Set classType based on campus
-                            document.getElementById("classType").value = (campus.trim().toUpperCase() === "DIL") ? "Online" : "In-Person";
-                            document.getElementById("classCode").value = loc.code || "";
-                        } else {
-                            classLocationInput.value = "";
-                            buildingRoomInput.value = "";
-                            document.getElementById("classType").value = "";
-                        }
+            jsonFetch(CLASS_URLS[program])
+                .then(data => {
+                    meetingTimeSelect.innerHTML = '<option value="">-- Select Day & Time --</option>';
+                    const times = data[selectedClass]?.[instructor] || [];
+                    times.forEach(t => {
+                        const opt = document.createElement("option");
+                        opt.value = t;
+                        opt.textContent = t;
+                        meetingTimeSelect.appendChild(opt);
                     });
-            }
+
+                    const loc = data[selectedClass]?.[`${instructor}_location`];
+                    if (loc) {
+                        const campus = (loc.campus || "").trim();
+                        classLocationInput.value = campus;
+
+                        // Build "Building, room #X" only when building/room exist
+                        const b = (loc.building || "").trim();
+                        const r = (loc.room || "").trim();
+                        buildingRoomInput.value = (b || r) ? `${b}${b && r ? ", " : ""}${r ? "room #"+r : ""}` : "";
+
+                        // Set classType based on campus
+                        document.getElementById("classType").value = (campus.toUpperCase() === "DIL") ? "Online" : "In-Person";
+                        document.getElementById("classCode").value = loc.code || "";
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    meetingTimeSelect.innerHTML = '<option value="">(load failed)</option>';
+                });
         });
 
+        // ---------- Submit ----------
         form.addEventListener("submit", async e => {
             e.preventDefault();
             document.getElementById("loadingIndicator").style.display = "block";
@@ -170,6 +204,10 @@
                 messageBox.textContent = text.includes("Success") ? "Request successfully recorded." : "Submission failed.";
                 alert(text.includes("Success") ? "Request submitted." : "Submission failed.");
                 form.reset();
+                // Clear dependent selects after submit
+                classSelect.innerHTML = "";
+                instructorSelect.innerHTML = "";
+                meetingTimeSelect.innerHTML = "";
             } catch (error) {
                 alert("Submission failed due to a network error.");
                 const messageBox = document.getElementById("submissionMessage");
@@ -179,6 +217,40 @@
                 document.getElementById("loadingIndicator").style.display = "none";
             }
         });
+
+        // ---------- Automatic Refresh Logic ----------
+        async function refreshAccordingToState() {
+            const program = programSelect.value;
+            const selectedClass = classSelect.value;
+            const instructor = instructorSelect.value;
+
+            if (!program) return;
+
+            // If only program is chosen, refresh classes
+            if (program && !selectedClass) {
+                programSelect.dispatchEvent(new Event("change"));
+                return;
+            }
+
+            // If class chosen but no instructor yet, refresh instructors
+            if (program && selectedClass && !instructor) {
+                classSelect.dispatchEvent(new Event("change"));
+                return;
+            }
+
+            // If instructor chosen, refresh times & location
+            if (program && selectedClass && instructor) {
+                instructorSelect.dispatchEvent(new Event("change"));
+            }
+        }
+
+        // Refresh cadence
+        const REFRESH_MS = 2 * 60 * 1000;
+        setInterval(refreshAccordingToState, REFRESH_MS);
+        document.addEventListener("visibilitychange", () => {
+            if (!document.hidden) refreshAccordingToState();
+        });
+        window.addEventListener("online", refreshAccordingToState);
     </script>
 </body>
 

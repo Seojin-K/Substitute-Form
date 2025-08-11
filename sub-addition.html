@@ -83,6 +83,8 @@
         const HSE_URL = "https://script.google.com/macros/s/AKfycbxyVB5Hce9AUQ56RVtF9ayaWvbM0A_xq96Gag10zjB0Cz23ePnyuNNjrR2xZ9ypQeLr/exec";
         const CPW_URL = "https://script.google.com/macros/s/AKfycbyt5xXy9dT_Lchc1NuDfv6LCGUHDGXH9k1Dgg6jczyPF-jZuB0kpVzY7dmDQE6wpa4i/exec";
 
+        const SUBMIT_URL = "https://script.google.com/macros/s/AKfycbw10VqwLNGE6pUJBFH5oCjn8wsEIdJOXgSOEhDjXxYQjQZEDJxnG5c4JhZGBVODrT8d0Q/exec";
+
         const cacheBust = (url) => `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`;
 
         async function fetchClassNames(url) {
@@ -269,20 +271,92 @@
         const timeInputsContainer = document.getElementById("timeInputsContainer");
         dayCheckboxes.forEach(cb => cb.addEventListener("change", updateTimeInputs));
 
-        // Auto refresh function
+        // ====== Submit Handler ======
+        additionForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const loading = document.getElementById("loadingIndicator");
+            loading.style.display = "block";
+
+            const accEmail = document.getElementById("accEmail").value.trim();
+            const name = document.getElementById("name").value.trim();
+            const phone = document.getElementById("phone").value.trim();
+            const contactMethod = "email";
+
+            const daysAvailable = Array.from(document.querySelectorAll('input[name="daysAvailable"]:checked')).map(cb => cb.value);
+            const campuses = campusChoices.getValue(true);
+            const classesCanTeach = classChoices.getValue(true);
+
+            const timesAvailable = {};
+            daysAvailable.forEach(day => {
+                const startInput = document.querySelector(`input[name="start_${day}"]`);
+                const endInput = document.querySelector(`input[name="end_${day}"]`);
+                if (startInput?.value && endInput?.value) {
+                    timesAvailable[day] = `${startInput.value} to ${endInput.value}`;
+                }
+            });
+
+            const availabilityMode = document.querySelector('input[name="availabilityMode"]:checked')?.value || "";
+
+            if (!accEmail.toLowerCase().endsWith("@austincc.edu")) {
+                alert("Please enter a valid ACC email ending in @austincc.edu");
+                loading.style.display = "none";
+                return;
+            }
+
+            if (!name || !accEmail || !contactMethod) {
+                alert("Please fill in all required fields.");
+                loading.style.display = "none";
+                return;
+            }
+
+            const formData = new URLSearchParams({
+                formType: "addition",
+                accEmail: accEmail,
+                name: name,
+                email: accEmail,
+                phone: phone,
+                contactMethod: contactMethod,
+                daysAvailable: daysAvailable.join(", "),
+                timesAvailable: JSON.stringify(timesAvailable),
+                availabilityMode: availabilityMode,
+                campuses: campuses.join(", "),
+                classesCanTeach: classesCanTeach.join(", ")
+            });
+
+            fetch(SUBMIT_URL, {
+                method: "POST",
+                body: formData,
+                mode: "no-cors"
+            })
+                .then(() => {
+                    const messageBox = document.getElementById("submissionMessage");
+                    loading.style.display = "none";
+                    messageBox.style.color = "green";
+                    messageBox.textContent = "Submission sent successfully!";
+                    additionForm.reset();
+                    document.getElementById("timeInputsContainer").innerHTML = "";
+                    classChoices?.removeActiveItems();
+                    campusChoices?.removeActiveItems();
+                })
+                .catch(error => {
+                    const messageBox = document.getElementById("submissionMessage");
+                    loading.style.display = "none";
+                    messageBox.style.color = "red";
+                    messageBox.textContent = "Error submitting form.";
+                    console.error("Error submitting form:", error);
+                });
+        });
+
+        // ====== Auto Refresh Logic ======
         async function refreshData() {
             await Promise.all([populateClassesCanTeach(), populateCampusSelect()]);
         }
 
-        // Auto-refresh every 2 minutes
         setInterval(refreshData, 2 * 60 * 1000);
-
-        // Refresh when tab becomes visible
         document.addEventListener("visibilitychange", () => {
             if (!document.hidden) refreshData();
         });
-
-        // Refresh when coming back online
         window.addEventListener("online", refreshData);
 
         // Initial load

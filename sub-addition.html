@@ -83,11 +83,11 @@
         const HSE_URL = "https://script.google.com/macros/s/AKfycbxyVB5Hce9AUQ56RVtF9ayaWvbM0A_xq96Gag10zjB0Cz23ePnyuNNjrR2xZ9ypQeLr/exec";
         const CPW_URL = "https://script.google.com/macros/s/AKfycbyt5xXy9dT_Lchc1NuDfv6LCGUHDGXH9k1Dgg6jczyPF-jZuB0kpVzY7dmDQE6wpa4i/exec";
 
-        const classCheckboxContainer = document.getElementById("classesCanTeachContainer");
+        const cacheBust = (url) => `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`;
 
         async function fetchClassNames(url) {
             try {
-                const res = await fetch(url);
+                const res = await fetch(cacheBust(url), { cache: "no-store" });
                 const data = await res.json();
                 return Object.keys(data);
             } catch (err) {
@@ -107,8 +107,7 @@
             ]);
 
             const allClassesRaw = [...eslClasses, ...hseClasses, ...cpwClasses];
-
-            const seen = new Map(); // key: lowercase class, value: original casing
+            const seen = new Map();
 
             allClassesRaw.forEach(cls => {
                 const lower = cls.toLowerCase();
@@ -139,13 +138,11 @@
             classSelect.classList.remove("hidden");
         }
 
-        populateClassesCanTeach();
-
         const campusSelect = document.getElementById("campusSelect");
 
         async function fetchCampusesFromUrl(url) {
             try {
-                const res = await fetch(url);
+                const res = await fetch(cacheBust(url), { cache: "no-store" });
                 const data = await res.json();
                 const campuses = new Set();
 
@@ -170,16 +167,14 @@
         let campusChoices;
 
         async function populateCampusSelect() {
-            /* const [eslCampuses, hseCampuses] = await Promise.all([
+            const [eslCampuses, hseCampuses, cpwCampuses] = await Promise.all([
                 fetchCampusesFromUrl(ESL_URL),
-                fetchCampusesFromUrl(HSE_URL)
+                fetchCampusesFromUrl(HSE_URL),
+                fetchCampusesFromUrl(CPW_URL)
             ]);
 
-            const allRaw = [...eslCampuses, ...hseCampuses];
-            */
-            const eslCampuses = await fetchCampusesFromUrl(ESL_URL);
-            const allRaw = [...eslCampuses];
-            const seen = new Map(); // key: lowercase campus name, value: original casing
+            const allRaw = [...eslCampuses, ...hseCampuses, ...cpwCampuses];
+            const seen = new Map();
 
             allRaw.forEach(campus => {
                 const normalized = campus.toLowerCase();
@@ -192,7 +187,6 @@
 
             campusSelect.innerHTML = "";
 
-            // Always include "Online Only" option first
             const onlineOpt = document.createElement("option");
             onlineOpt.value = "Online Only";
             onlineOpt.textContent = "Online Only";
@@ -216,89 +210,7 @@
             });
         }
 
-        populateCampusSelect();
-
-        document.getElementById("subAdditionForm").addEventListener("submit", (e) => {
-            e.preventDefault();
-
-            const loading = document.getElementById("loadingIndicator");
-            loading.style.display = "block";
-
-            const accEmail = document.getElementById("accEmail").value.trim();
-            const name = document.getElementById("name").value.trim();
-            const phone = document.getElementById("phone").value.trim();
-            const contactMethod = "email";
-
-            const daysAvailable = Array.from(document.querySelectorAll('input[name="daysAvailable"]:checked')).map(cb => cb.value);
-            const campuses = campusChoices.getValue(true);
-            const classesCanTeach = classChoices.getValue(true);
-
-            const timesAvailable = {};
-            daysAvailable.forEach(day => {
-                const startInput = document.querySelector(`input[name="start_${day}"]`);
-                const endInput = document.querySelector(`input[name="end_${day}"]`);
-                if (startInput?.value && endInput?.value) {
-                    timesAvailable[day] = `${startInput.value} to ${endInput.value}`;
-                }
-            });
-
-            const availabilityMode = document.querySelector('input[name="availabilityMode"]:checked')?.value || "";
-
-            if (!accEmail.toLowerCase().endsWith("@austincc.edu")) {
-                alert("Please enter a valid ACC email ending in @austincc.edu");
-                loading.style.display = "none";
-                return;
-            }
-
-            if (!name || !accEmail || !contactMethod) {
-                alert("Please fill in all required fields.");
-                loading.style.display = "none";
-                return;
-            }
-
-
-            const formData = new URLSearchParams({
-                formType: "addition",
-                accEmail: accEmail,
-                name: name,
-                email: accEmail,
-                phone: phone,
-                contactMethod: contactMethod,
-                daysAvailable: daysAvailable.join(", "),
-                timesAvailable: JSON.stringify(timesAvailable),
-                availabilityMode: availabilityMode,
-                campuses: campuses.join(", "),
-                classesCanTeach: classesCanTeach.join(", ")
-            });
-
-            fetch("https://script.google.com/macros/s/AKfycbw10VqwLNGE6pUJBFH5oCjn8wsEIdJOXgSOEhDjXxYQjQZEDJxnG5c4JhZGBVODrT8d0Q/exec", {
-                method: "POST",
-                body: formData,
-                mode: "no-cors"
-            })
-                .then(() => {
-                    const messageBox = document.getElementById("submissionMessage");
-                    loading.style.display = "none";
-                    messageBox.style.color = "green";
-                    messageBox.textContent = "Submission sent successfully!";
-                    additionForm.reset();
-                    document.getElementById("timeInputsContainer").innerHTML = "";
-                })
-                .catch(error => {
-                    const messageBox = document.getElementById("submissionMessage");
-                    loading.style.display = "none";
-                    messageBox.style.color = "red";
-                    messageBox.textContent = "Error submitting form.";
-                    console.error("Error submitting form:", error);
-                });
-        });
-
-        // === Time picker rendering ===
-        const dayCheckboxes = document.querySelectorAll('input[name="daysAvailable"]');
-        const timeInputsContainer = document.getElementById("timeInputsContainer");
-
         function updateTimeInputs() {
-            // Save existing time values
             const existingTimes = {};
             dayCheckboxes.forEach(checkbox => {
                 const day = checkbox.value;
@@ -353,15 +265,28 @@
             });
         }
 
+        const dayCheckboxes = document.querySelectorAll('input[name="daysAvailable"]');
+        const timeInputsContainer = document.getElementById("timeInputsContainer");
         dayCheckboxes.forEach(cb => cb.addEventListener("change", updateTimeInputs));
 
-        // Highlight tab if applicable
-        const links = document.querySelectorAll(".tab-link");
-        links.forEach(link => {
-            if (link.href === window.location.href) {
-                link.classList.add("active");
-            }
+        // Auto refresh function
+        async function refreshData() {
+            await Promise.all([populateClassesCanTeach(), populateCampusSelect()]);
+        }
+
+        // Auto-refresh every 2 minutes
+        setInterval(refreshData, 2 * 60 * 1000);
+
+        // Refresh when tab becomes visible
+        document.addEventListener("visibilitychange", () => {
+            if (!document.hidden) refreshData();
         });
+
+        // Refresh when coming back online
+        window.addEventListener("online", refreshData);
+
+        // Initial load
+        refreshData();
     </script>
 </body>
 

@@ -38,7 +38,8 @@
             <label for="teacherEmail">Your ACC Email:</label>
             <input type="email" id="teacherEmail" name="teacherEmail" required placeholder="yourname@austincc.edu">
 
-            <label for="note">Additional Note (If you need this sub in the next term, not the current term, or if you have a specific sub
+            <label for="note">Additional Note (If you need this sub in the next term, not the current term, or if you
+                have a specific sub
                 in your mind, please leave a message here.):</label>
             <input type="text" id="note" name="note" placeholder="Enter any additional info...">
 
@@ -125,7 +126,8 @@
             jsonFetch(CLASS_URLS[program])
                 .then(data => {
                     instructorSelect.innerHTML = '<option value="">-- Select Instructor --</option>';
-                    const instructors = Object.keys(data[selectedClass] || {}).filter(k => !k.endsWith("_location"));
+                    // This logic is simplified as we no longer need to filter out "_location" keys
+                    const instructors = Object.keys(data[selectedClass] || {});
                     instructors.forEach(name => {
                         const opt = document.createElement("option");
                         opt.value = name;
@@ -140,12 +142,13 @@
                 });
         });
 
-        // ---------- Populate Meeting Times & Hidden Fields when Instructor changes ----------
+        // ---------- MODIFIED: Populate Meeting Times ONLY when Instructor changes ----------
         instructorSelect.addEventListener("change", () => {
             const program = programSelect.value;
             const selectedClass = classSelect.value;
             const instructor = instructorSelect.value;
 
+            // Clear only the fields that follow
             meetingTimeSelect.innerHTML = "";
             classLocationInput.value = "";
             buildingRoomInput.value = "";
@@ -159,32 +162,58 @@
             jsonFetch(CLASS_URLS[program])
                 .then(data => {
                     meetingTimeSelect.innerHTML = '<option value="">-- Select Day & Time --</option>';
+                    // The data for an instructor is now an array of objects
                     const times = data[selectedClass]?.[instructor] || [];
-                    times.forEach(t => {
+                    times.forEach(timeObj => {
                         const opt = document.createElement("option");
-                        opt.value = t;
-                        opt.textContent = t;
+                        opt.value = timeObj.time; // The value is the time string from the object
+                        opt.textContent = timeObj.time; // The text shown to the user
                         meetingTimeSelect.appendChild(opt);
                     });
-
-                    const loc = data[selectedClass]?.[`${instructor}_location`];
-                    if (loc) {
-                        const campus = (loc.campus || "").trim();
-                        classLocationInput.value = campus;
-
-                        // Build "Building, room #X" only when building/room exist
-                        const b = (loc.building || "").trim();
-                        const r = (loc.room || "").trim();
-                        buildingRoomInput.value = (b || r) ? `${b}${b && r ? ", " : ""}${r ? "room #"+r : ""}` : "";
-
-                        // Set classType based on campus
-                        document.getElementById("classType").value = (campus.toUpperCase() === "DIL") ? "Online" : "In-Person";
-                        document.getElementById("classCode").value = loc.code || "";
-                    }
+                    // Note: The logic to populate hidden fields has been REMOVED from here.
                 })
                 .catch(err => {
                     console.error(err);
                     meetingTimeSelect.innerHTML = '<option value="">(load failed)</option>';
+                });
+        });
+
+        // ---------- NEW: Populate Hidden Fields when Meeting Time changes ----------
+        meetingTimeSelect.addEventListener("change", () => {
+            const program = programSelect.value;
+            const selectedClass = classSelect.value;
+            const instructor = instructorSelect.value;
+            const selectedTime = meetingTimeSelect.value;
+
+            // Clear hidden fields before populating them
+            classLocationInput.value = "";
+            buildingRoomInput.value = "";
+            document.getElementById("classType").value = "";
+            document.getElementById("classCode").value = "";
+
+            if (!program || !selectedClass || !instructor || !selectedTime) return;
+
+            jsonFetch(CLASS_URLS[program])
+                .then(data => {
+                    const times = data[selectedClass]?.[instructor] || [];
+                    // Find the specific object that matches the selected time string
+                    const timeData = times.find(t => t.time === selectedTime);
+
+                    // If a match is found, populate the hidden fields from its data
+                    if (timeData) {
+                        const campus = (timeData.campus || "").trim();
+                        classLocationInput.value = campus;
+
+                        const b = (timeData.building || "").trim();
+                        const r = (timeData.room || "").trim();
+                        buildingRoomInput.value = (b || r) ? `${b}${b && r ? ", " : ""}${r ? "room #" + r : ""}` : "";
+
+                        document.getElementById("classType").value = (campus.toUpperCase() === "DIL") ? "Online" : "In-Person";
+                        document.getElementById("classCode").value = timeData.code || "";
+                    }
+                })
+                .catch(err => {
+                    console.error("Failed to load location data for the selected time:", err);
                 });
         });
 
@@ -204,7 +233,6 @@
                 messageBox.textContent = text.includes("Success") ? "Request successfully recorded." : "Submission failed.";
                 alert(text.includes("Success") ? "Request submitted." : "Submission failed.");
                 form.reset();
-                // Clear dependent selects after submit
                 classSelect.innerHTML = "";
                 instructorSelect.innerHTML = "";
                 meetingTimeSelect.innerHTML = "";
@@ -218,33 +246,32 @@
             }
         });
 
-        // ---------- Automatic Refresh Logic ----------
+        // ---------- Automatic Refresh Logic (Unchanged) ----------
         async function refreshAccordingToState() {
             const program = programSelect.value;
             const selectedClass = classSelect.value;
             const instructor = instructorSelect.value;
+            const meetingTime = meetingTimeSelect.value; // Check for meeting time as well
 
             if (!program) return;
-
-            // If only program is chosen, refresh classes
             if (program && !selectedClass) {
                 programSelect.dispatchEvent(new Event("change"));
                 return;
             }
-
-            // If class chosen but no instructor yet, refresh instructors
             if (program && selectedClass && !instructor) {
                 classSelect.dispatchEvent(new Event("change"));
                 return;
             }
-
-            // If instructor chosen, refresh times & location
-            if (program && selectedClass && instructor) {
+            if (program && selectedClass && instructor && !meetingTime) {
                 instructorSelect.dispatchEvent(new Event("change"));
+                return;
+            }
+            if (program && selectedClass && instructor && meetingTime) {
+                // Refresh the final step to update location details if they changed
+                meetingTimeSelect.dispatchEvent(new Event("change"));
             }
         }
 
-        // Refresh cadence
         const REFRESH_MS = 2 * 60 * 1000;
         setInterval(refreshAccordingToState, REFRESH_MS);
         document.addEventListener("visibilitychange", () => {

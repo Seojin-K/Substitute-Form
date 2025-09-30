@@ -149,16 +149,17 @@
                 const campuses = new Set();
 
                 for (const className in data) {
-                    for (const key in data[className]) {
-                        if (key.endsWith("_location")) {
-                            const campus = data[className][key]?.campus?.trim();
+                    for (const instructorName in data[className]) {
+                        const timeSlots = data[className][instructorName];
+
+                        timeSlots.forEach(slot => {
+                            const campus = slot.campus?.trim();
                             if (campus && campus.toUpperCase() !== "DIL") {
                                 campuses.add(campus);
                             }
-                        }
+                        });
                     }
                 }
-
                 return campuses;
             } catch (err) {
                 console.error("Error fetching campuses from:", url, err);

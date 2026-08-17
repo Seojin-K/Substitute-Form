@@ -1,0 +1,21 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/frontend/sub-request.html"
+    },
+    {
+      "source": "/sub-request",
+      "destination": "/frontend/sub-request.html"
+    },
+    {
+      "source": "/sub-addition",
+      "destination": "/frontend/sub-addition.html"
+    },
+    {
+      "source": "/request-styles.css",
+      "destination": "/frontend/request-styles.css"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "acc-substitute-proxy",
+  "main": "worker.js",
+  "compatibility_date": "2024-01-01",
+  "vars": {
+    "SUBMIT_MODE": "test",
+    "SUBMIT_URL_TEST": "https://script.google.com/macros/s/AKfycbyMZpbvgwOIIvx3jINRDImV2eN-Vm2JhUgG82BGBHS40vnwl1Hpl5kLBKazo3DObvdIfg/exec",
+    "SUBMIT_URL_PROD": "https://script.google.com/macros/s/AKfycbw10VqwLNGE6pUJBFH5oCjn8wsEIdJOXgSOEhDjXxYQjQZEDJxnG5c4JhZGBVODrT8d0Q/exec",
+    "SUBMIT_URL": "https://script.google.com/macros/s/AKfycbyMZpbvgwOIIvx3jINRDImV2eN-Vm2JhUgG82BGBHS40vnwl1Hpl5kLBKazo3DObvdIfg/exec",
+    "ESL_URL": "https://script.google.com/macros/s/AKfycbyn9YROZy3Q-Jn1ZU0kgzjw9097rUIV-_uvf6IOCRkJk236v3Ng5REFvuDkLRQP4AN7/exec",
+    "HSE_URL": "https://script.google.com/macros/s/AKfycbxyVB5Hce9AUQ56RVtF9ayaWvbM0A_xq96Gag10zjB0Cz23ePnyuNNjrR2xZ9ypQeLr/exec",
+    "CPW_URL": "https://script.google.com/macros/s/AKfycbyt5xXy9dT_Lchc1NuDfv6LCGUHDGXH9k1Dgg6jczyPF-jZuB0kpVzY7dmDQE6wpa4i/exec"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "sub-avail-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Vercel Serverless Proxy Function & Apps Script deployment for ACC Substitute Form",
+  "scripts": {
+    "dev": "vercel dev"
+  }
+}

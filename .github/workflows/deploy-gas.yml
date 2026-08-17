@@ -1,0 +1,41 @@
+name: Deploy Apps Script Backend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Clasp
+        run: npm install -g @google/clasp
+
+      - name: Inject Clasp Credentials and Project ID
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          CLASP_JSON: ${{ secrets.CLASP_JSON }}
+        run: |
+          # 1. Inject the authentication token into the runner's home directory
+          echo "$CLASPRC_JSON" > ~/.clasprc.json
+          
+          # 2. Inject the project ID directly into the backend working directory
+          echo "$CLASP_JSON" > .clasp.json
+
+      - name: Push to Google Apps Script
+        run: clasp push --force

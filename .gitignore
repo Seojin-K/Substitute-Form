@@ -1,0 +1,17 @@
+# Environment secrets
+.env
+.env*.local
+*.env
+
+# Vercel & Node
+.vercel/
+node_modules/
+
+# Cloudflare Wrangler
+.wrangler/
+worker/.wrangler/
+
+# Google Apps Script secrets
+.clasp.json
+
+.vercel

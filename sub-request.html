@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Substitute Request Form</title>
+    <link rel="stylesheet" href="request-styles.css">
+</head>
+
+<body>
+    <div class="form-container">
+        <form id="subRequestForm">
+            <label for="program">Program:</label>
+            <select id="program" name="program" required>
+                <option value="">-- Select Program --</option>
+                <option value="ESL">ESL</option>
+                <option value="HSE">HSE</option>
+                <option value="CPW">CPW</option>
+            </select>
+
+            <label for="class">Class:</label>
+            <select id="class" name="class" required></select>
+
+            <label for="instructor">Instructor:</label>
+            <select id="instructor" name="instructor" required></select>
+
+            <label for="meetingTime">Meeting Day & Time:</label>
+            <select id="meetingTime" name="meetingTime" required></select>
+
+            <label for="dateNeeded">Date sub is needed:</label>
+            <input type="date" id="dateNeeded" name="dateNeeded" required>
+
+            <input type="hidden" id="classType" name="classType">
+            <input type="hidden" id="classLocation" name="classLocation">
+            <input type="hidden" id="buildingRoom" name="buildingRoom">
+            <input type="hidden" id="classCode" name="classCode">
+
+            <label for="teacherEmail">Your ACC Email:</label>
+            <input type="email" id="teacherEmail" name="teacherEmail" required placeholder="yourname@austincc.edu">
+
+            <label for="note">Additional Note (If you need this sub in the next term, not the current term, or if you
+                have a specific sub
+                in your mind, please leave a message here.):</label>
+            <input type="text" id="note" name="note" placeholder="Enter any additional info...">
+
+            <div class="form-buttons">
+                <button type="submit">Submit</button>
+                <button type="reset">Reset</button>
+            </div>
+
+            <div id="loadingIndicator" style="display: none; margin-top: 1em; font-weight: bold;">
+                <div class="spinner"
+                    style="display: inline-block; width: 16px; height: 16px; border: 2px solid #ccc; border-top-color: #333; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px;">
+                </div>
+                <span>Submitting... Please wait.</span>
+            </div>
+
+            <div id="submissionMessage" aria-live="polite" style="color: green; font-weight: bold; margin-top: 1em;">
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById("subRequestForm");
+        const classSelect = document.getElementById("class");
+        const instructorSelect = document.getElementById("instructor");
+        const meetingTimeSelect = document.getElementById("meetingTime");
+        const programSelect = document.getElementById("program");
+        const classLocationInput = document.getElementById("classLocation");
+        const buildingRoomInput = document.getElementById("buildingRoom");
+
+        // API Base URL: Automatically targets local Wrangler server when running locally, or deployed Worker on GitHub Pages
+        const isLocal = ["localhost", "127.0.0.1", ""].includes(window.location.hostname);
+        const API_BASE_URL = isLocal ? "http://localhost:8787" : "https://acc-substitute-proxy.acc-substitute.workers.dev";
+
+        const CLASS_URLS = {
+            ESL: `${API_BASE_URL}/api/data?program=ESL`,
+            HSE: `${API_BASE_URL}/api/data?program=HSE`,
+            CPW: `${API_BASE_URL}/api/data?program=CPW`
+        };
+
+        const programCache = {};
+        const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache TTL
+
+        async function getProgramData(program, forceRefresh = false) {
+            const cached = programCache[program];
+            const now = Date.now();
+            if (!forceRefresh && cached && (now - cached.timestamp < CACHE_TTL_MS)) {
+                return cached.data;
+            }
+            const res = await fetch(CLASS_URLS[program]);
+            const data = await res.json();
+            programCache[program] = { data, timestamp: now };
+            return data;
+        }
+
+        function showMessage(text, isError = false) {
+            const messageBox = document.getElementById("submissionMessage");
+            if (!messageBox) return;
+            messageBox.style.color = isError ? "#d32f2f" : "#2e7d32";
+            messageBox.textContent = text;
+        }
+
+        function clearSelect(selectElement) {
+            selectElement.textContent = "";
+        }
+
+        function setSelectState(selectElement, text, value = "") {
+            clearSelect(selectElement);
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = text;
+            selectElement.appendChild(option);
+        }
+
+        // ---------- Populate Classes when Program changes ----------
+        programSelect.addEventListener("change", async () => {
+            const program = programSelect.value;
+            clearSelect(classSelect);
+            clearSelect(instructorSelect);
+            clearSelect(meetingTimeSelect);
+            classLocationInput.value = "";
+            buildingRoomInput.value = "";
+            document.getElementById("classType").value = "";
+            document.getElementById("classCode").value = "";
+
+            if (!program) return;
+
+            setSelectState(classSelect, "Loading classes...");
+            try {
+                const data = await getProgramData(program);
+                setSelectState(classSelect, "-- Select Class --");
+                Object.keys(data).forEach(cls => {
+                    const option = document.createElement("option");
+                    option.value = cls;
+                    option.textContent = cls;
+                    classSelect.appendChild(option);
+                });
+            } catch (e) {
+                setSelectState(classSelect, "Failed to load classes");
+                console.error(e);
+            }
+        });
+
+        // ---------- Populate Instructors when Class changes ----------
+        classSelect.addEventListener("change", async () => {
+            const program = programSelect.value;
+            const selectedClass = classSelect.value;
+
+            clearSelect(instructorSelect);
+            clearSelect(meetingTimeSelect);
+            classLocationInput.value = "";
+            buildingRoomInput.value = "";
+            document.getElementById("classType").value = "";
+            document.getElementById("classCode").value = "";
+
+            if (!program || !selectedClass) return;
+
+            setSelectState(instructorSelect, "Loading instructors...");
+
+            try {
+                const data = await getProgramData(program);
+                setSelectState(instructorSelect, "-- Select Instructor --");
+                const instructors = Object.keys(data[selectedClass] || {});
+                instructors.forEach(name => {
+                    const opt = document.createElement("option");
+                    opt.value = name;
+                    opt.textContent = name;
+                    instructorSelect.appendChild(opt);
+                });
+            } catch (err) {
+                console.error("Error loading instructor data:", err);
+                setSelectState(instructorSelect, "(failed to load instructors)");
+            }
+        });
+
+        // ---------- Populate Meeting Times ONLY when Instructor changes ----------
+        instructorSelect.addEventListener("change", async () => {
+            const program = programSelect.value;
+            const selectedClass = classSelect.value;
+            const instructor = instructorSelect.value;
+
+            clearSelect(meetingTimeSelect);
+            classLocationInput.value = "";
+            buildingRoomInput.value = "";
+            document.getElementById("classType").value = "";
+            document.getElementById("classCode").value = "";
+
+            if (!program || !selectedClass || !instructor) return;
+
+            setSelectState(meetingTimeSelect, "Loading times...");
+
+            try {
+                const data = await getProgramData(program);
+                setSelectState(meetingTimeSelect, "-- Select Day & Time --");
+                const times = data[selectedClass]?.[instructor] || [];
+                times.forEach(timeObj => {
+                    const opt = document.createElement("option");
+                    opt.value = timeObj.time;
+                    opt.textContent = timeObj.time;
+                    meetingTimeSelect.appendChild(opt);
+                });
+            } catch (err) {
+                console.error(err);
+                setSelectState(meetingTimeSelect, "(load failed)");
+            }
+        });
+
+        // ---------- Populate Hidden Fields when Meeting Time changes ----------
+        meetingTimeSelect.addEventListener("change", async () => {
+            const program = programSelect.value;
+            const selectedClass = classSelect.value;
+            const instructor = instructorSelect.value;
+            const selectedTime = meetingTimeSelect.value;
+
+            classLocationInput.value = "";
+            buildingRoomInput.value = "";
+            document.getElementById("classType").value = "";
+            document.getElementById("classCode").value = "";
+
+            if (!program || !selectedClass || !instructor || !selectedTime) return;
+
+            try {
+                const data = await getProgramData(program);
+                const times = data[selectedClass]?.[instructor] || [];
+                const timeData = times.find(t => t.time === selectedTime);
+
+                if (timeData) {
+                    const campus = (timeData.campus || "").trim();
+                    classLocationInput.value = campus;
+
+                    const b = (timeData.building || "").trim();
+                    const r = (timeData.room || "").trim();
+                    buildingRoomInput.value = (b || r) ? `${b}${b && r ? ", " : ""}${r ? "room #" + r : ""}` : "";
+
+                    document.getElementById("classType").value = (campus.toUpperCase() === "DIL") ? "Online" : "In-Person";
+                    document.getElementById("classCode").value = timeData.code || "";
+                }
+            } catch (err) {
+                console.error("Failed to load location data for the selected time:", err);
+            }
+        });
+
+        const dateNeededInput = document.getElementById("dateNeeded");
+        if (dateNeededInput) {
+            dateNeededInput.min = new Date().toISOString().split("T")[0];
+        }
+
+        // ---------- Submit ----------
+        form.addEventListener("submit", async e => {
+            e.preventDefault();
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+            document.getElementById("loadingIndicator").style.display = "block";
+
+            const formData = new URLSearchParams(new FormData(form));
+            formData.append("formType", "request");
+            const endpoint = `${API_BASE_URL}/api/submit`;
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: "POST",
+                    body: formData
+                });
+                const text = await res.text();
+                const isBusy = text.includes("Server busy");
+                const isSuccess = res.ok && text.includes("Success");
+
+                if (isBusy) {
+                    showMessage("Server is currently busy. Please wait a moment and try again.", true);
+                    return;
+                }
+
+                if (!isSuccess) {
+                    showMessage("Submission failed. Please try again or contact support if the issue persists.", true);
+                    return;
+                }
+
+                showMessage("Request successfully recorded.", false);
+                form.reset();
+                if (dateNeededInput) {
+                    dateNeededInput.min = new Date().toISOString().split("T")[0];
+                }
+                clearSelect(classSelect);
+                clearSelect(instructorSelect);
+                clearSelect(meetingTimeSelect);
+            } catch (error) {
+                console.error("Submission error:", error);
+                showMessage("Submission failed due to a network error. Please check your connection and try again.", true);
+            } finally {
+                document.getElementById("loadingIndicator").style.display = "none";
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>

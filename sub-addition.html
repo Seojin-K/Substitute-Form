@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="request-styles.css">
+    <!-- Choices.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+
+    <!-- Choices.js JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+    <title>Substitute Update Form</title>
+</head>
+
+<body>
+    <div class="form-container">
+
+        <form id="subAdditionForm">
+
+            <label for="accEmail">ACC Email:</label>
+            <input type="email" id="accEmail" name="accEmail" required placeholder="yourname@austincc.edu">
+            <span id="accEmailError" style="color: red; display: none;">ACC email must end in @austincc.edu</span>
+
+            <label for="phone">Phone Number:</label>
+            <input type="tel" id="phone" name="phone" placeholder="123-456-7890" required>
+
+            <label for="name">Substitute Name:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label>Days Available to Sub:</label>
+            <div class="checkbox-group">
+                <label><input type="checkbox" name="daysAvailable" value="Mon"> Mon</label>
+                <label><input type="checkbox" name="daysAvailable" value="Tues"> Tues</label>
+                <label><input type="checkbox" name="daysAvailable" value="Wed"> Wed</label>
+                <label><input type="checkbox" name="daysAvailable" value="Thurs"> Thurs</label>
+                <label><input type="checkbox" name="daysAvailable" value="Fri"> Fri</label>
+                <label><input type="checkbox" name="daysAvailable" value="Sat"> Sat</label>
+            </div>
+
+            <!-- Placeholder Time input container -->
+            <div id="timeInputsContainer"></div>
+
+            <label>In-Person or Online?</label>
+            <div class="radio-group">
+                <label><input type="radio" name="availabilityMode" value="In-Person" required> In-Person</label>
+                <label><input type="radio" name="availabilityMode" value="Online"> Online</label>
+                <label><input type="radio" name="availabilityMode" value="Both"> Both</label>
+            </div>
+
+            <div class="campus-group">
+                <label for="campusSelect">Which campuses are you available at?</label>
+                <select id="campusSelect" name="campuses" multiple></select>
+            </div>
+
+            <div class="campus-group">
+                <label for="classSelect">Which classes can you teach?</label>
+                <select id="classSelect" name="classesCanTeach" multiple></select>
+            </div>
+
+            <div class="form-buttons">
+                <button type="submit">Submit</button>
+                <button type="reset">Reset</button>
+            </div>
+
+            <div id="loadingIndicator" style="display: none; font-weight: bold; margin-top: 1em;">
+                <div class="spinner"
+                    style="display:inline-block;width:16px;height:16px;border:2px solid #ccc;border-top-color:#333;border-radius:50%;animation:spin 1s linear infinite;margin-right:8px;">
+                </div>
+                <span>Submitting... Please wait.</span>
+            </div>
+
+            <div id="submissionMessage" aria-live="polite" style="color: green; font-weight: bold; margin-top: 1em;">
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const additionForm = document.getElementById("subAdditionForm");
+
+        // API Base URL (defaults to Cloudflare Worker domain when running on GitHub Pages)
+        /* const API_BASE_URL = window.location.hostname.includes("github.io")
+            ? "https://acc-sub-proxy.workers.dev"
+            : ""; */
+        // API Base URL: Automatically targets local Wrangler server when running locally, or deployed Worker on GitHub Pages
+        const isLocal = ["localhost", "127.0.0.1", ""].includes(window.location.hostname);
+        const API_BASE_URL = isLocal ? "http://localhost:8787" : "https://acc-substitute-proxy.acc-substitute.workers.dev";
+
+        const ESL_URL = `${API_BASE_URL}/api/data?program=ESL`;
+        const HSE_URL = `${API_BASE_URL}/api/data?program=HSE`;
+        const CPW_URL = `${API_BASE_URL}/api/data?program=CPW`;
+        const SUBMIT_URL = `${API_BASE_URL}/api/submit`;
+
+        let programsDataCache = null;
+        let cacheTimestamp = 0;
+        const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache TTL
+
+        async function fetchAllProgramsData(forceRefresh = false) {
+            const now = Date.now();
+            if (!forceRefresh && programsDataCache && (now - cacheTimestamp < CACHE_TTL_MS)) {
+                return programsDataCache;
+            }
+
+            try {
+                const [esl, hse, cpw] = await Promise.all([
+                    fetch(ESL_URL).then(r => r.json()).catch(() => ({})),
+                    fetch(HSE_URL).then(r => r.json()).catch(() => ({})),
+                    fetch(CPW_URL).then(r => r.json()).catch(() => ({}))
+                ]);
+                programsDataCache = { ESL: esl, HSE: hse, CPW: cpw };
+                cacheTimestamp = now;
+                return programsDataCache;
+            } catch (err) {
+                console.error("Error fetching programs data:", err);
+                return programsDataCache || { ESL: {}, HSE: {}, CPW: {} };
+            }
+        }
+
+        let classChoices;
+        let campusChoices;
+        const classSelect = document.getElementById("classSelect");
+
+        async function populateClassesCanTeach() {
+            try {
+                const allData = await fetchAllProgramsData();
+                const eslClasses = Object.keys(allData?.ESL || {});
+                const hseClasses = Object.keys(allData?.HSE || {});
+                const cpwClasses = Object.keys(allData?.CPW || {});
+
+                const allClassesRaw = [...eslClasses, ...hseClasses, ...cpwClasses].filter(c => c && c !== "error");
+                const seen = new Map();
+
+                allClassesRaw.forEach(cls => {
+                    const lower = cls.toLowerCase();
+                    if (!seen.has(lower)) {
+                        seen.set(lower, cls);
+                    }
+                });
+
+                const uniqueClasses = Array.from(seen.values()).sort();
+
+                classSelect.textContent = "";
+                uniqueClasses.forEach(cls => {
+                    const option = document.createElement("option");
+                    option.value = cls;
+                    option.textContent = cls;
+                    classSelect.appendChild(option);
+                });
+            } catch (err) {
+                console.error("Error populating classes can teach:", err);
+            } finally {
+                if (classChoices) {
+                    try { classChoices.destroy(); } catch (e) {}
+                }
+                classChoices = new Choices("#classSelect", {
+                    removeItemButton: true,
+                    shouldSort: true,
+                    placeholderValue: "Select one or more classes",
+                    searchEnabled: true
+                });
+            }
+        }
+
+        const CAMPUS_NAMES = {
+            CYP: "Cypress Creek (CYP)",
+            EVC: "Eastview (EVC)",
+            EGN: "Elgin (EGN)",
+            HYS: "Hays (HYS)",
+            HLC: "Highland (HLC)",
+            MNC: "Makefield (MNC)",
+            NRG: "Northridge (NRG)",
+            RVS: "Riverside (RVS)",
+            RRC: "Round Rock (RRC)",
+            SGC: "San Gabriel (SGC)",
+            SAC: "South Austin (SAC)"
+        };
+
+        const campusSelect = document.getElementById("campusSelect");
+
+        async function populateCampusSelect() {
+            try {
+                const allData = await fetchAllProgramsData();
+                const campuses = new Set();
+
+                if (allData && typeof allData === "object") {
+                    [allData.ESL, allData.HSE, allData.CPW].forEach(data => {
+                        if (!data || typeof data !== "object" || data.error) return;
+                        for (const className in data) {
+                            const instructors = data[className];
+                            if (!instructors || typeof instructors !== "object") continue;
+                            for (const instructorName in instructors) {
+                                const timeSlots = instructors[instructorName];
+                                if (Array.isArray(timeSlots)) {
+                                    timeSlots.forEach(slot => {
+                                        const campus = slot?.campus?.trim();
+                                        if (campus && campus.toUpperCase() !== "DIL") {
+                                            campuses.add(campus);
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    });
+                }
+
+                const seen = new Map();
+                Array.from(campuses).forEach(campus => {
+                    const normalized = campus.toLowerCase();
+                    if (!seen.has(normalized)) {
+                        seen.set(normalized, campus);
+                    }
+                });
+
+                const defaultCampuses = ["Cypress Creek", "Eastview", "Elgin", "Hays", "Highland", "Makefield", "Riverside", "Round Rock", "San Gabriel", "South Austin"];
+                const rawCampuses = Array.from(seen.values());
+                const campusList = rawCampuses.length > 0 ? rawCampuses : defaultCampuses;
+
+                const allCampuses = ["Online Only", ...campusList];
+                const uniqueCampuses = Array.from(new Set(allCampuses)).sort();
+
+                campusSelect.textContent = "";
+                uniqueCampuses.forEach(campus => {
+                    const option = document.createElement("option");
+                    const codeUpper = campus.toUpperCase();
+                    const displayLabel = CAMPUS_NAMES[codeUpper] || campus;
+                    option.value = campus;
+                    option.textContent = displayLabel;
+                    campusSelect.appendChild(option);
+                });
+            } catch (err) {
+                console.error("Error populating campus select:", err);
+            } finally {
+                if (campusChoices) {
+                    try { campusChoices.destroy(); } catch (e) {}
+                }
+                campusChoices = new Choices("#campusSelect", {
+                    removeItemButton: true,
+                    shouldSort: true,
+                    placeholderValue: "Select one or more campuses",
+                    searchEnabled: true
+                });
+            }
+        }
+
+        function updateTimeInputs() {
+            const existingTimes = {};
+            dayCheckboxes.forEach(checkbox => {
+                const day = checkbox.value;
+                const startInput = document.querySelector(`input[name="start_${day}"]`);
+                const endInput = document.querySelector(`input[name="end_${day}"]`);
+                if (startInput && endInput) {
+                    existingTimes[day] = {
+                        start: startInput.value,
+                        end: endInput.value
+                    };
+                }
+            });
+
+            timeInputsContainer.innerHTML = "";
+
+            dayCheckboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    const day = checkbox.value;
+
+                    const wrapper = document.createElement("div");
+                    wrapper.style.marginBottom = "10px";
+                    wrapper.classList.add("time-range");
+
+                    const label = document.createElement("label");
+                    label.textContent = `${day} Available Time:`;
+                    label.style.display = "block";
+                    label.style.marginTop = "10px";
+
+                    const startInput = document.createElement("input");
+                    startInput.type = "time";
+                    startInput.name = `start_${day}`;
+                    startInput.required = true;
+                    startInput.value = existingTimes[day]?.start || "";
+
+                    const endInput = document.createElement("input");
+                    endInput.type = "time";
+                    endInput.name = `end_${day}`;
+                    endInput.required = true;
+                    endInput.value = existingTimes[day]?.end || "";
+
+                    const toLabel = document.createElement("span");
+                    toLabel.textContent = " to ";
+                    toLabel.style.margin = "0 8px";
+
+                    wrapper.appendChild(label);
+                    wrapper.appendChild(startInput);
+                    wrapper.appendChild(toLabel);
+                    wrapper.appendChild(endInput);
+
+                    timeInputsContainer.appendChild(wrapper);
+                }
+            });
+        }
+
+        const dayCheckboxes = document.querySelectorAll('input[name="daysAvailable"]');
+        const timeInputsContainer = document.getElementById("timeInputsContainer");
+        dayCheckboxes.forEach(cb => cb.addEventListener("change", updateTimeInputs));
+
+        document.getElementById("accEmail")?.addEventListener("input", () => {
+            document.getElementById("accEmailError").style.display = "none";
+        });
+
+        // ====== Submit Handler ======
+        additionForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const submitBtn = additionForm.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            const loading = document.getElementById("loadingIndicator");
+            loading.style.display = "block";
+
+            const accEmailInput = document.getElementById("accEmail");
+            const accEmail = accEmailInput.value.trim();
+            const emailErrorSpan = document.getElementById("accEmailError");
+            const name = document.getElementById("name").value.trim();
+            const phone = document.getElementById("phone").value.trim();
+            const contactMethod = "email";
+
+            const daysAvailable = Array.from(document.querySelectorAll('input[name="daysAvailable"]:checked')).map(cb => cb.value);
+            const campuses = campusChoices.getValue(true);
+            const classesCanTeach = classChoices.getValue(true);
+
+            let timeValidationError = false;
+            const timesAvailable = {};
+            daysAvailable.forEach(day => {
+                const startInput = document.querySelector(`input[name="start_${day}"]`);
+                const endInput = document.querySelector(`input[name="end_${day}"]`);
+                if (startInput?.value && endInput?.value) {
+                    if (startInput.value >= endInput.value) {
+                        timeValidationError = true;
+                    }
+                    timesAvailable[day] = `${startInput.value} to ${endInput.value}`;
+                }
+            });
+
+            const availabilityMode = document.querySelector('input[name="availabilityMode"]:checked')?.value || "";
+
+            if (!accEmail.toLowerCase().endsWith("@austincc.edu")) {
+                emailErrorSpan.style.display = "inline";
+                loading.style.display = "none";
+                if (submitBtn) submitBtn.disabled = false;
+                return;
+            } else {
+                emailErrorSpan.style.display = "none";
+            }
+
+            function showMessage(text, isError = false) {
+                const messageBox = document.getElementById("submissionMessage");
+                if (!messageBox) return;
+                messageBox.style.color = isError ? "#d32f2f" : "#2e7d32";
+                messageBox.textContent = text;
+            }
+
+            if (!name || !accEmail || !contactMethod) {
+                showMessage("Please fill in all required fields.", true);
+                loading.style.display = "none";
+                if (submitBtn) submitBtn.disabled = false;
+                return;
+            }
+
+            if (timeValidationError) {
+                showMessage("Invalid availability time range: end time must be after start time.", true);
+                loading.style.display = "none";
+                if (submitBtn) submitBtn.disabled = false;
+                return;
+            }
+
+            const formData = new URLSearchParams({
+                formType: "addition",
+                accEmail: accEmail,
+                name: name,
+                email: accEmail,
+                phone: phone,
+                contactMethod: contactMethod,
+                daysAvailable: daysAvailable.join(", "),
+                timesAvailable: JSON.stringify(timesAvailable),
+                availabilityMode: availabilityMode,
+                campuses: campuses.join(", "),
+                classesCanTeach: classesCanTeach.join(", ")
+            });
+
+            fetch(SUBMIT_URL, {
+                method: "POST",
+                body: formData
+            })
+                .then(async res => {
+                    const text = await res.text();
+                    loading.style.display = "none";
+                    if (submitBtn) submitBtn.disabled = false;
+                    const isBusy = text.includes("Server busy");
+                    const isSuccess = res.ok && (text.includes("successfully") || text.includes("updated"));
+
+                    if (isBusy) {
+                        showMessage("Server is currently busy. Please wait a moment and try again.", true);
+                        return;
+                    }
+
+                    if (!isSuccess) {
+                        showMessage("Submission failed. Please try again or contact support if the issue persists.", true);
+                        return;
+                    }
+
+                    showMessage(text || "Substitute added successfully!", false);
+                    additionForm.reset();
+                    document.getElementById("timeInputsContainer").textContent = "";
+                    classChoices?.removeActiveItems();
+                    campusChoices?.removeActiveItems();
+                })
+                .catch(error => {
+                    loading.style.display = "none";
+                    if (submitBtn) submitBtn.disabled = false;
+                    showMessage("Error submitting form due to a network error. Please try again.", true);
+                    console.error("Error submitting form:", error);
+                });
+        });
+
+        // ====== Data Initialization ======
+        async function refreshData(forceRefresh = false) {
+            await Promise.all([populateClassesCanTeach(), populateCampusSelect()]);
+        }
+
+        // Initial load
+        refreshData();
+    </script>
+</body>
+
+</html>

@@ -474,7 +474,18 @@ function updateAvailableSubstitutes(sheet1, sheet2, hdr1, hdr2, rowIndex, inMemo
 function isSubAvailableThatDay(timeJson, weekday, classTimeRange, sheet1, hdr1) {
   try {
     const availability = JSON.parse(timeJson);
-    const window = availability[weekday];
+    const keyAliases = {
+      "Tue": ["Tue", "Tues"],
+      "Thu": ["Thu", "Thurs"]
+    };
+    const possibleKeys = keyAliases[weekday] || [weekday];
+    let window = null;
+    for (const k of possibleKeys) {
+      if (availability[k]) {
+        window = availability[k];
+        break;
+      }
+    }
     if (!window) return false;
     const [startStr, endStr] = window.split("to").map(s => s.trim());
     const subStart = parseTimeString(startStr);
